@@ -7,3 +7,5 @@
 *.aux
 *.vo*
 *.glob
+
+__pycache__/

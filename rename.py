@@ -66,7 +66,7 @@ def restore_comments_and_strings(
     return text
 
 
-def collect_defs(text: str) -> set[str]:
+def collect_ind_defs(text: str) -> set[str]:
     defs = set()
     # Find the inductive definitions
     pattern = re.compile(
@@ -82,6 +82,20 @@ def collect_defs(text: str) -> set[str]:
     return defs
 
 
+def collect_other_defs(text: str) -> set[str]:
+    """Collect definitions from Fixpoint, Definition, Theorem, Lemma."""
+    defs = set()
+    # Pattern to find definitions like 'Fixpoint name ...', 'Definition name ...', etc.
+    # It captures the identifier immediately following the keyword.
+    pattern = re.compile(
+        r"^\s*(?:Fixpoint|Definition|Theorem|Lemma)\s+([A-Za-z][A-Za-z0-9_']*)\b",
+        re.MULTILINE,
+    )
+    for m in pattern.finditer(text):
+        defs.add(m.group(1))
+    return defs
+
+
 def apply_renames(text: str, rename_map: dict[str, str]) -> str:
     # Sort by length desc to avoid partial overlaps
     for old in sorted(rename_map, key=len, reverse=True):
@@ -90,43 +104,44 @@ def apply_renames(text: str, rename_map: dict[str, str]) -> str:
     return text
 
 
+def rename(filetext: str) -> tuple[str, dict[str, str]]:
+    masked, comments, strings = mask_comments_and_strings(filetext)
+
+    # Collect all definitions
+    ind_defs = collect_ind_defs(masked)
+    other_defs = collect_other_defs(masked)
+    all_defs = ind_defs.union(other_defs)
+
+    rename_map: dict[str, str] = {}
+
+    user_map = {}
+    # Build rename_map
+    for name in all_defs:
+        if name in user_map:
+            rename_map[name] = user_map[name]
+        else:
+            # generate fresh name, ensuring it doesn't collide with existing defs or user-provided new names
+            rename_map[name] = fresh_valid_name(name, all_defs | set(user_map.values()))
+
+    if not rename_map:
+        print("No definitions found for renaming.", file=sys.stderr)
+        sys.exit(1)
+
+    rewritten = apply_renames(masked, rename_map)
+    final = restore_comments_and_strings(rewritten, comments, strings)
+    return final, rename_map
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Coq inductive/constructor renaming tool"
     )
     parser.add_argument("input", type=Path, help="Input Coq .v file")
     parser.add_argument("output", type=Path, help="Output Coq .v file")
-    parser.add_argument(
-        "--mapping",
-        type=Path,
-        help="Optional JSON file with { old_name: new_name } mapping",
-    )
     args = parser.parse_args()
 
     text = args.input.read_text(encoding="utf-8")
-    masked, comments, strings = mask_comments_and_strings(text)
-
-    defs = collect_defs(masked)
-    rename_map: dict[str, str] = {}
-
-    user_map = {}
-    if args.mapping:
-        user_map = json.loads(args.mapping.read_text(encoding="utf-8"))
-
-    # Build rename_map
-    for name in defs:
-        if name in user_map:
-            rename_map[name] = user_map[name]
-        else:
-            # generate fresh name
-            rename_map[name] = fresh_valid_name(name, defs | set(user_map.values()))
-
-    if not rename_map:
-        print("No inductives or constructors found for renaming.", file=sys.stderr)
-        sys.exit(1)
-
-    rewritten = apply_renames(masked, rename_map)
-    final = restore_comments_and_strings(rewritten, comments, strings)
+    final, rename_map = rename(text)
     args.output.write_text(final, encoding="utf-8")
     print(f"Renamed {len(rename_map)} identifiers.")
 
