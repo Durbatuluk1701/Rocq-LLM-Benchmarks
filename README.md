@@ -14,3 +14,7 @@ $$LLMs := \{ Llama,\ ChatGPT,\ Deepseek,\ Claude \}$$
    1. Test the provability of the original theorem. $\forall b \in benchmarks,\forall l \in LLMs,\ Run\ b\ l$
    2. Test the provability of a mutated theorem. $\forall b \in benchmarks,\forall l \in LLMs,\ Run\ (mutate\ b\ true\ true)\ l$
 5. Compare results from the above testing
+
+## Notes
+
+The dataset of .v files in coq_projects has been sourced from the [CoqGym](https://github.com/princeton-vl/CoqGym) project.
