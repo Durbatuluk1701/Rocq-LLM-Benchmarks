@@ -1,0 +1,23 @@
+{
+  "file": "example.v",
+  "theorems": [
+    {
+      "type": "Theorem",
+      "name": "tree_depth_nonneg",
+      "statement": "Theorem tree_depth_nonneg {A} (t : Tree A) : tree_depth t >= 0.",
+      "context": "(* example.v *)\nRequire Import Lia.\n\n(* A simple option type *)\nInductive myOption (A : Type) : Type :=\n| mySome : A -> myOption A\n| myNone : myOption A.\nArguments mySome {A} _.\nArguments myNone {A}.\n\n(* A binary tree *)\nInductive Tree (A : Type) : Type :=\n| Leaf : Tree A\n| Node : A -> Tree A -> Tree A -> Tree A.\nArguments Leaf {A}.\nArguments Node {A} _ _ _.\n\nFixpoint tree_from_list {A} (l : list A) : Tree A :=\n  match l with\n  | nil => Leaf\n  | cons x xs => Node x (tree_from_list xs) Leaf\n  end.\n\nFixpoint tree_depth {A} (t : Tree A) : nat :=\n  match t with\n  | Leaf => 0\n  | Node _ l r => S (max (tree_depth l) (tree_depth r))\n  end."
+    },
+    {
+      "type": "Theorem",
+      "name": "tree_depth_zero_iff",
+      "statement": "Theorem tree_depth_zero_iff {A} (t : Tree A) : tree_depth t = 0 <-> t = Leaf.",
+      "context": "(* example.v *)\nRequire Import Lia.\n\n(* A simple option type *)\nInductive myOption (A : Type) : Type :=\n| mySome : A -> myOption A\n| myNone : myOption A.\nArguments mySome {A} _.\nArguments myNone {A}.\n\n(* A binary tree *)\nInductive Tree (A : Type) : Type :=\n| Leaf : Tree A\n| Node : A -> Tree A -> Tree A -> Tree A.\nArguments Leaf {A}.\nArguments Node {A} _ _ _.\n\nFixpoint tree_from_list {A} (l : list A) : Tree A :=\n  match l with\n  | nil => Leaf\n  | cons x xs => Node x (tree_from_list xs) Leaf\n  end.\n\nFixpoint tree_depth {A} (t : Tree A) : nat :=\n  match t with\n  | Leaf => 0\n  | Node _ l r => S (max (tree_depth l) (tree_depth r))\n  end.\n\nTheorem tree_depth_nonneg {A} (t : Tree A) : tree_depth t >= 0.\nProof.\n  induction t.\n  - simpl; econstructor.\n  - simpl.\n    assert (tree_depth t1 >= tree_depth t2 \\/ tree_depth t2 >= tree_depth t1) as [H|H] by lia;\n    [ erewrite max_l | erewrite max_r ]; lia.\nQed."
+    },
+    {
+      "type": "Theorem",
+      "name": "tree_from_list_depth",
+      "statement": "Theorem tree_from_list_depth : forall {A} (l1 : list A),\n  tree_depth (tree_from_list l1) = length l1.  Proof.\n  induction l1; simpl in *; eauto; subst; lia.\nQed.\n\nDefinition test1 {A} (x : myOption A) : bool :=\n  match x with\n  | mySome _ => true\n  | myNone   => false\n  end.\n\n(* In a string: \"Some and None should not be renamed\" *)\nDefinition test2 : Tree nat := Node 0 Leaf Leaf.\n\n(* A comment with Node and myOption *)\n(* Don\u2019t touch: Some, None, Tree, Node, Leaf *).",
+      "context": "(* example.v *)\nRequire Import Lia.\n\n(* A simple option type *)\nInductive myOption (A : Type) : Type :=\n| mySome : A -> myOption A\n| myNone : myOption A.\nArguments mySome {A} _.\nArguments myNone {A}.\n\n(* A binary tree *)\nInductive Tree (A : Type) : Type :=\n| Leaf : Tree A\n| Node : A -> Tree A -> Tree A -> Tree A.\nArguments Leaf {A}.\nArguments Node {A} _ _ _.\n\nFixpoint tree_from_list {A} (l : list A) : Tree A :=\n  match l with\n  | nil => Leaf\n  | cons x xs => Node x (tree_from_list xs) Leaf\n  end.\n\nFixpoint tree_depth {A} (t : Tree A) : nat :=\n  match t with\n  | Leaf => 0\n  | Node _ l r => S (max (tree_depth l) (tree_depth r))\n  end.\n\nTheorem tree_depth_nonneg {A} (t : Tree A) : tree_depth t >= 0.\nProof.\n  induction t.\n  - simpl; econstructor.\n  - simpl.\n    assert (tree_depth t1 >= tree_depth t2 \\/ tree_depth t2 >= tree_depth t1) as [H|H] by lia;\n    [ erewrite max_l | erewrite max_r ]; lia.\nQed.\n\n    Theorem tree_depth_zero_iff {A} (t : Tree A) : tree_depth t = 0 <-> t = Leaf.\nProof.\n  destruct t; simpl in *; intuition;\n  try congruence.\nQed."
+    }
+  ]
+}
