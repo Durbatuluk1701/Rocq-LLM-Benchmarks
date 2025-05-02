@@ -12,7 +12,7 @@ def fresh_valid_name(old_name: str, existing: set[str]) -> str:
     Generate a fresh Coq-valid identifier that does not collide with existing names.
     Coq identifiers start with a letter and may contain letters, digits, underscores, and apostrophes.
     """
-    i = 8
+    i = random.randint(6, 16)
     while True:
         start = "".join(random.choices(string.ascii_lowercase + string.ascii_uppercase))
         rest = "".join(
