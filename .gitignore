@@ -1,7 +1,9 @@
 **/.lia.cache
 **/*.aux
 **/*.vo*
+**/*.glob
 
 .lia.cache
 *.aux
 *.vo*
+*.glob
