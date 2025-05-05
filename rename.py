@@ -55,13 +55,23 @@ def mask_comments_and_strings(text: str):
 def restore_strings(
     # NOTE: We don't restore comments because they may reveal too much underlying structure
     text: str,
-    comments: list[str],
     strings: list[str],
 ) -> str:
     def _restore_string(m):
         return strings[int(m.group(1))]
 
     text = re.sub(r"__STRING_(\d+)__", _restore_string, text)
+    return text
+
+
+def blast_away_comments(text: str, comments: list[str]) -> str:
+    # Deletes comments but keeps the structure of the code
+    def _blast_comment(m):
+        # We can use the comment text to determine the length of the comment
+        # and replace it with a space of the same length
+        return " " * len(comments[int(m.group(1))])
+
+    text = re.sub(r"__COMMENT_(\d+)__", _blast_comment, text)
     return text
 
 
@@ -127,7 +137,8 @@ def rename(filetext: str) -> tuple[str, dict[str, str]]:
         sys.exit(1)
 
     rewritten = apply_renames(masked, rename_map)
-    final = restore_strings(rewritten, comments, strings)
+    final = restore_strings(rewritten, strings)
+    final = blast_away_comments(rewritten, comments)
     return final, rename_map
 
 
