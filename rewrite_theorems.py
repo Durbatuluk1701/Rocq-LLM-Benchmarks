@@ -120,9 +120,7 @@ def equality_ids(tree: list[list[str]]):
 
     return []
 
-k = "Theorem tree_depth_zero_iff {A} (t : Tree A) : (tree_depth t) = 0 <-> t = Leaf."
-            
-test = parseminor(parselogical(parens(preprocess(k)))[1])
+
 
 def infix_traverse(tree): 
 
@@ -158,12 +156,15 @@ def prefix_to_str(str):
         string += i + " "
     return string
 
-
+'''
+k = "Theorem tree_depth_zero_iff {A} (t : Tree A) : (tree_depth t) = 0 <-> t = Leaf."
+            
+test = parseminor(parselogical(parens(preprocess(k)))[1])
 for i in equality_ids(test): 
 
     print(f"------------\n"\
           f"{prefix_to_str(i)}\n")
 
-
+'''
 
 
