@@ -17,8 +17,11 @@ def write_prompt(path, filename):
             with open('prompts/' + filename + "-prompt.txt", "w") as prompt_file:
                  # 1: Write any pre-material for the prompt
                  prompt_file.write(prompt_front())
+                 # 2: Write contents to prompt file
                  for line in input_file:
                       prompt_file.write(line)
+                 # 3: Write post material
+                 # [add code as needed]
                  
 
 
