@@ -3,11 +3,19 @@ from random import randint
 import re
 from typing import Callable
 
-def rewrite_theorems(file_contents: str) -> str:
-    # TODO: Mostly got it done, have the parser and mutator in place as yielding functions, just need to utilize them, need to 
-    # add in a few more mutations
-    # finally need to double check my parsing on a more expressive theorem
-    return file_contents
+def rewrite_theorems(file_contents: str) -> dict[str,str]:
+
+    contents = gather_theorems(file_contents)
+    theorem = contents["statement"]
+    rewrites = list(mutate_generator(parselogical(parens(preprocess(theorem)))))
+    leng = len(rewrites)
+
+    name, inverse, original, mut = rewrites[randint(leng)]
+    contents["statement"]  = mut
+    contents["rewrite"] = name
+    contents["inverse"] = inverse
+
+    return contents
     
 
 def rectify_proofs(file_contents: str) -> str:
@@ -20,7 +28,7 @@ def rectify_proofs(file_contents: str) -> str:
 
 
 def preprocess(string): 
-    for i in ["(", ")", ",", "="]: 
+    for i in ["(", ")", ",", "=", r"(?<!<)->", r"<-(?!>)", "<->", "."]: 
         string = string.replace(i, f" {i} ")
     return string.split()
 
@@ -53,10 +61,19 @@ def parselogical(stringlist):
             _, prog1 = parselogical(token[1:-1])
             prog.append(["()", prog1])
 
+        elif token == ".": 
+            return stringlist, prog
+
         elif token in binary_conn: 
             stringlist, prog2 = parselogical(stringlist)
             return  stringlist, [token, prog, prog2]
         
+        elif token in ["forall", "exists"]: 
+            stringlist, prog1 = parselogical(stringlist)
+            stringlist, prog2 = parselogical(stringlist)
+            return stringlist, prog.append([token, prog1, prog2])
+        elif token == ",": 
+            return stringlist, prog.append(token)
         else: 
 
             prog.append(token)
@@ -82,49 +99,49 @@ def parseminor(proglist):
 
 
 
-def equality_ids(tree: list[list[str]]): 
+def mutate_generator(tree: list[list[str]]): 
 
     if tree == []: 
         return [] 
 
     if tree[0] == "=": 
-        yield [tree[0], tree[2], tree[1]]
-        for i in equality_ids(tree[1]): 
-            if i != []: 
-                yield [tree[0], i, tree[2]]
+        yield "Equal: A=B <-> B=A", "inverse", [[tree[0], tree[1], tree[2]]],[tree[0], tree[2], tree[1]]
+        for name, inverse, original, mutation in mutate_generator(tree[1]): 
+            if mutation != []: 
+                yield name, inverse, original, [tree[0], i, tree[2]]
         
-        for i in equality_ids(tree[2]): 
-            if i != []: 
-                yield [tree[0], tree[1], i]
-        return []
+        for name, inverse, original, mutation in mutate_generator(tree[2]): 
+            if mutation != []: 
+                yield name, inverse, original [tree[0], tree[1], i]
+        return "", [], []
         
     elif tree[0] == ":": 
 
-        for mutation in equality_ids(tree[2]):
+        for name, inverse, original, mutation in mutate_generator(tree[2]):
             if mutation != []:
-                yield [tree[0], tree[1], mutation]
+                yield name,inverse, original, [tree[0], tree[1], mutation]
 
 
     elif tree[0] == "<->": 
 
-        yield [tree[0], tree[2], tree[1]]
-        yield ["/\\", ["->", tree[2], tree[1]], ["->", tree[1], tree[2]]]
+        yield "A <-> B == B <-> A", "inverse", [tree[0], tree[1], tree[2]], [tree[0], tree[2], tree[1]]
+        yield "A <-> B == (A -> B) /\\ (B -> A)", "inverse", [tree[0], tree[1], tree[2]],["/\\", ["()", ["->", tree[2], tree[1]]], ["()", ["->", tree[1], tree[2]]]]
         
-        for mut in equality_ids(tree[1]): 
+        for name,inverse, original, mut in mutate_generator(tree[1]): 
             if mut != []: 
-                yield [tree[0], mut, tree[2]]
+                yield name,inverse, original, [tree[0], mut, tree[2]]
 
-        for mut in equality_ids(tree[2]): 
+        for name,inverse,original, mut in mutate_generator(tree[2]): 
             if mut != []: 
-                yield [tree[0], tree[1], mut]
+                yield name,inverse, original, [tree[0], tree[1], mut]
 
-    return []
+    return "", []
 
 
 
 def infix_traverse(tree): 
 
-    connectives = ["=", "<=", ">=", "<", ">", "<->", "<-", "->", " iff ", "/\\", "\\/", ":"]
+    connectives = ["=", "<=", ">=", "<", ">", "<->", "<-", "->", " iff ", "/\\", "\\/", ":", "forall", "exists"]
 
     if isinstance(tree, list): 
         if tree[0] in connectives: 
@@ -154,17 +171,25 @@ def prefix_to_str(str):
 
     for i in infix_traverse(str):
         string += i + " "
+
+    string += "."
     return string
 
-'''
-k = "Theorem tree_depth_zero_iff {A} (t : Tree A) : (tree_depth t) = 0 <-> t = Leaf."
-            
-test = parseminor(parselogical(parens(preprocess(k)))[1])
-for i in equality_ids(test): 
 
-    print(f"------------\n"\
+k = "Theorem tree_depth_zero_iff {A} (t : Tree A) : (tree_depth t) = 0 <-> t = Leaf."
+
+print(f"Original :\n {k}\n----------\n")
+test = parseminor(parselogical(parens(preprocess(k)))[1])
+for name, inverse, original, i in mutate_generator(test): 
+
+    print(f"{name}\n{inverse}\n"
           f"{prefix_to_str(i)}\n")
 
-'''
 
+"""
+assert(freshname : statementnew <-> statementold)
+    by (proof).
+rewrite freshname.
+
+"""
 
