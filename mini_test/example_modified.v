@@ -2,59 +2,59 @@
 Require Import Lia.
 
                           
-Inductive leQiUWV (A : Type) : Type :=
-| t4QVnaFA : A -> leQiUWV A
-| WFQMTo74Aq25IkIg : leQiUWV A.
-Arguments t4QVnaFA {A} _.
-Arguments WFQMTo74Aq25IkIg {A}.
+Inductive pVqM5RLOUCDma3IoM (A : Type) : Type :=
+| VGeaXYabEnsvxS : A -> pVqM5RLOUCDma3IoM A
+| bOWGLYJX : pVqM5RLOUCDma3IoM A.
+Arguments VGeaXYabEnsvxS {A} _.
+Arguments bOWGLYJX {A}.
 
                    
-Inductive FbWmsKCKNW83 (A : Type) : Type :=
-| MFJaxAN79C6Lm : FbWmsKCKNW83 A
-| D8XdSMa : A -> FbWmsKCKNW83 A -> FbWmsKCKNW83 A -> FbWmsKCKNW83 A.
-Arguments MFJaxAN79C6Lm {A}.
-Arguments D8XdSMa {A} _ _ _.
+Inductive FUzDjn''ewI (A : Type) : Type :=
+| H12KOEaMC7K96sRkH : FUzDjn''ewI A
+| u9jYZOr82l7QB : A -> FUzDjn''ewI A -> FUzDjn''ewI A -> FUzDjn''ewI A.
+Arguments H12KOEaMC7K96sRkH {A}.
+Arguments u9jYZOr82l7QB {A} _ _ _.
 
-Fixpoint zgFZMc8A6UjIO'm {A} (l : list A) : FbWmsKCKNW83 A :=
+Fixpoint blXKvIXIXlURcMCM {A} (l : list A) : FUzDjn''ewI A :=
   match l with
-  | nil => MFJaxAN79C6Lm
-  | cons x xs => D8XdSMa x (zgFZMc8A6UjIO'm xs) MFJaxAN79C6Lm
+  | nil => H12KOEaMC7K96sRkH
+  | cons x xs => u9jYZOr82l7QB x (blXKvIXIXlURcMCM xs) H12KOEaMC7K96sRkH
   end.
 
-Fixpoint SogfhVF {A} (t : FbWmsKCKNW83 A) : nat :=
+Fixpoint adJTB7c2XYmc9 {A} (t : FUzDjn''ewI A) : nat :=
   match t with
-  | MFJaxAN79C6Lm => 0
-  | D8XdSMa _ l r => S (max (SogfhVF l) (SogfhVF r))
+  | H12KOEaMC7K96sRkH => 0
+  | u9jYZOr82l7QB _ l r => S (max (adJTB7c2XYmc9 l) (adJTB7c2XYmc9 r))
   end.
 
-Theorem LEDEsKiaoLPC3CRq {A} (t : FbWmsKCKNW83 A) : SogfhVF t >= 0.
+Theorem GudZKpfNtaqSNjSI {A} (t : FUzDjn''ewI A) : adJTB7c2XYmc9 t >= 0.
 Proof.
   induction t.
   - simpl; econstructor.
   - simpl.
-    assert (SogfhVF t1 >= SogfhVF t2 \/ SogfhVF t2 >= SogfhVF t1) as [H|H] by lia;
+    assert (adJTB7c2XYmc9 t1 >= adJTB7c2XYmc9 t2 \/ adJTB7c2XYmc9 t2 >= adJTB7c2XYmc9 t1) as [H|H] by lia;
     [ erewrite max_l | erewrite max_r ]; lia.
 Qed.
 
-Theorem g1xDZe14C8km {A} (t : FbWmsKCKNW83 A) : SogfhVF t = 0 <-> t = MFJaxAN79C6Lm.
+Theorem hjhEsWq {A} (t : FUzDjn''ewI A) : adJTB7c2XYmc9 t = 0 <-> t = H12KOEaMC7K96sRkH.
 Proof.
   destruct t; simpl in *; intuition;
   try congruence.
 Qed.
 
-Theorem CibHv2x : forall {A} (l1 : list A),
-  SogfhVF (zgFZMc8A6UjIO'm l1) = length l1.
+Theorem RwwF'laxl : forall {A} (l1 : list A),
+  adJTB7c2XYmc9 (blXKvIXIXlURcMCM l1) = length l1.
 Proof.
   induction l1; simpl in *; eauto; subst; lia.  Qed.
 
-Definition EM2M5tUxQlS {A} (x : leQiUWV A) : bool :=
+Definition qV4JC_xOAhmov5fdL {A} (x : pVqM5RLOUCDma3IoM A) : bool :=
   match x with
-  | t4QVnaFA _ => true
-  | WFQMTo74Aq25IkIg   => false
+  | VGeaXYabEnsvxS _ => true
+  | bOWGLYJX   => false
   end.
 
                                                         
-Definition p4PIErQLbYl4P : FbWmsKCKNW83 nat := D8XdSMa 0 MFJaxAN79C6Lm MFJaxAN79C6Lm.
+Definition ONJx8XKPxznr5 : FUzDjn''ewI nat := u9jYZOr82l7QB 0 H12KOEaMC7K96sRkH H12KOEaMC7K96sRkH.
 
                                       
                                                

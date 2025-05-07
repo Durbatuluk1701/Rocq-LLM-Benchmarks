@@ -9,3 +9,4 @@
 *.glob
 
 __pycache__/
+venv/
