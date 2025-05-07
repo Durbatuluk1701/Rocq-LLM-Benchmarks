@@ -1,5 +1,4 @@
 import argparse
-import json
 import random
 import string
 import re

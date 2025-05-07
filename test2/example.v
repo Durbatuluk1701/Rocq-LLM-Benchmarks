@@ -27,7 +27,7 @@ Fixpoint tree_depth {A} (t : Tree A) : nat :=
   | Node _ l r => S (max (tree_depth l) (tree_depth r))
   end.
 
-Theorem tree_depth_nonneg {A} (t : Tree A) : tree_depth t >= 0.
+Theorem tree_depth_nonneg {A} : forall (t : Tree A), tree_depth t >= 0.
 Proof.
   induction t.
   - simpl; econstructor.
@@ -35,26 +35,3 @@ Proof.
     assert (tree_depth t1 >= tree_depth t2 \/ tree_depth t2 >= tree_depth t1) as [H|H] by lia;
     [ erewrite max_l | erewrite max_r ]; lia.
 Qed.
-
-Theorem tree_depth_zero_iff {A} (t : Tree A) : tree_depth t = 0 <-> t = Leaf.
-Proof.
-  destruct t; simpl in *; intuition;
-  try congruence.
-Qed.
-
-Theorem tree_from_list_depth : forall {A} (l1 : list A),
-  tree_depth (tree_from_list l1) = length l1.
-Proof.
-  induction l1; simpl in *; eauto; subst; lia.  Qed.
-
-Definition test1 {A} (x : myOption A) : bool :=
-  match x with
-  | mySome _ => true
-  | myNone   => false
-  end.
-
-(* In a string: "Some and None should not be renamed" *)
-Definition test2 : Tree nat := Node 0 Leaf Leaf.
-
-(* A comment with Node and myOption *)
-(* Don’t touch: Some, None, Tree, Node, Leaf *)

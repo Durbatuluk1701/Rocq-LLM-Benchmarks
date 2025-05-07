@@ -7,10 +7,13 @@
 # 2. Automated distribution of prompts
 ## -- Talk to Ollama
 
+import csv
+from dataclasses import dataclass
 import os
 import re
 import argparse
 from pathlib import Path
+import sys
 
 import gather_theorems
 from ollama import ChatResponse, Client
@@ -18,31 +21,60 @@ from ollama import ChatResponse, Client
 from mutator import check_coqc, mutate_coq_files
 
 
-def clean_response(response: str) -> str:
-    return NotImplemented
+@dataclass
+class Theorem:
+    name: str
+    context: str
+    statement: str
+    file: str
+    prompt: str
+    response: str | None = None
+    cleaned_response: str | None = None
+    compiles: bool = False
+    failed: bool = False
 
 
-def recombine_file(prompt_dict: dict[str, str]) -> str:
+def extract_proof_from_response(theorem_name: str, text: str) -> str | None:
+    theorem_index = text.find(theorem_name)
+
+    if theorem_index != -1:
+        # Case 1: theorem name found — search after it
+        sliced_text = text[theorem_index:]
+        match = re.search(r"Proof\.(.*?)(Qed|Defined)\.", sliced_text, re.DOTALL)
+        if match:
+            return "Proof." + match.group(1) + match.group(2) + "."
+        else:
+            return None  # No proof segment after theorem name
+    else:
+        # Case 2: theorem name not found — check for exactly one proof segment
+        matches = re.findall(r"Proof\.(.*?)(Qed|Defined)\.", text, re.DOTALL)
+        if len(matches) == 2:
+            return "Proof." + matches[0] + matches[1] + "."
+        else:
+            return None  # Either no matches or ambiguous multiple matches
+
+
+def recombine_file(prompt_dict: Theorem) -> str:
     # Recombine the original file with the response
     return f"""
-{prompt_dict["context"]}
-{prompt_dict["statement"]}
-{prompt_dict["cleaned_response"]}
+{prompt_dict.context}
+{prompt_dict.statement}
+{prompt_dict.cleaned_response}
 """
 
 
-def check_coq_compile_temp(file_contents: str) -> str:
+def check_coq_compile_temp(
+    file_contents: str, file_name: str | None = None, debug: bool = False
+) -> bool:
     # Write the contents to a temporary file
-    tempfile = Path("tempfile.v")
+    tempfile = Path("tempfile.v" if file_name is None else file_name)
     tempfile.write_text(file_contents, encoding="utf-8")
     # Check if the file compiles
     result = check_coqc(tempfile)
     # Clean up the temporary file
-    tempfile.unlink()
-    if result:
-        return "True"
-    else:
-        return "False"
+    if not debug:
+        tempfile.unlink()
+    return result
 
 
 # Writing a prompt based on the arguments
@@ -63,22 +95,22 @@ Supply only the complete proof body in the Coq proof language and no extra infor
 
 # For each modified file,
 # generate prompts for all gathered theorems and return all in a list.
-def write_prompts_per_modified_file(path) -> dict[str, str]:
-    prompt_dict: dict[str, str] = {}
+def write_prompts_per_modified_file(path) -> list[Theorem]:
+    prompt_dict: dict[str, str | bool] = {}
     # Gather context/theorem pairs using gather_theorems.collect_theorems()
     text = path.read_text(encoding="utf-8")
     ct_pairs = gather_theorems.collect_theorems(text)
+    theorem_list = []
     for elem in ct_pairs:
         name = elem.get("name")
         context = elem.get("context")
         statement = elem.get("statement")
-        prompt_dict["theorem_name"] = name
-        prompt_dict["context"] = context
-        prompt_dict["statement"] = statement
-        prompt_dict["file"] = path
-        # Generate the prompt string
-        prompt_dict["prompt"] = mad_lib_prompt(name, statement, context)
-    return prompt_dict
+        theorem_list.append(
+            Theorem(
+                name, context, statement, path, mad_lib_prompt(name, statement, context)
+            )
+        )
+    return theorem_list
 
 
 # Collect all modified files
@@ -106,9 +138,9 @@ def gather_modified_files(path):
 
 
 # Write all prompts for ollama and return as a list.
-def write_all_prompts(path) -> list[tuple[dict[str, str], dict[str, str]]]:
+def write_all_prompts(path) -> list[tuple[Theorem, Theorem]]:
 
-    all_prompts: list[tuple[dict[str, str], dict[str, str]]] = []
+    all_prompts: list[tuple[Theorem, Theorem]] = []
 
     # Collect all files to scrape for theorems.
     mutated_filenames: list[tuple[str, str]] = gather_modified_files(path)
@@ -117,7 +149,11 @@ def write_all_prompts(path) -> list[tuple[dict[str, str], dict[str, str]]]:
     for orig_file, mut_file in mutated_filenames:
         orig_prompt = write_prompts_per_modified_file(path / orig_file)
         mut_prompt = write_prompts_per_modified_file(path / mut_file)
-        all_prompts.append((orig_prompt, mut_prompt))
+        if len(orig_prompt) != len(mut_prompt):
+            raise RuntimeError(
+                f"Error: {orig_file} and {mut_file} have different number of theorems."
+            )
+        all_prompts += zip(orig_prompt, mut_prompt)
 
     return all_prompts
 
@@ -160,36 +196,34 @@ def main():
     mut_results = mutate_coq_files(args.input_dir)
 
     # Write all prompts for ollama.
-    prompts: list[tuple[dict[str, str], dict[str, str]]] = write_all_prompts(
-        args.input_dir
-    )
+    prompts: list[tuple[Theorem, Theorem]] = write_all_prompts(args.input_dir)
 
     MODEL_NAME = "llama3"
     for orig_prompt, mut_prompt in prompts:
         print("\n--- Original Prompt ---")
-        print(orig_prompt["prompt"])
+        print(orig_prompt.prompt)
         print("\n--- End of Original Prompt ---\n\n")
         # Send the prompt to ollama and get the response
-        orig_response = send_ollama_request(MODEL_NAME, orig_prompt["prompt"])
+        orig_response = send_ollama_request(MODEL_NAME, orig_prompt.prompt)
         print("\n--- Orig Response ---")
         resp_content = orig_response.message.content
         if resp_content:
             print(resp_content)
-            orig_prompt["response"] = resp_content
+            orig_prompt.response = resp_content
         else:
             print("NO ORIG REPONSE CONTENT RECEIVED!!!")
         print("\n--- End of Orig Response ---\n\n")
 
         print("\n--- Mutated Prompt ---")
-        print(mut_prompt["prompt"])
+        print(mut_prompt.prompt)
         print("\n--- End of Mutated Prompt ---\n\n")
         # Send the prompt to ollama and get the response
-        mut_response = send_ollama_request(MODEL_NAME, mut_prompt["prompt"])
+        mut_response = send_ollama_request(MODEL_NAME, mut_prompt.prompt)
         print("\n--- mut Response ---")
         resp_content = mut_response.message.content
         if resp_content:
             print(resp_content)
-            mut_prompt["response"] = resp_content
+            mut_prompt.response = resp_content
         else:
             print("NO mut REPONSE CONTENT RECEIVED!!!")
         print("\n--- End of mut Response ---\n\n")
@@ -209,24 +243,65 @@ def main():
 
     for orig_dict, mut_dict in prompts:
         # Check if the original file is valid
-        orig_dict["cleaned_response"] = clean_response(orig_dict["response"])
-        mut_dict["cleaned_response"] = clean_response(mut_dict["response"])
+        if orig_dict.response is None:
+            print("No response for original file.")
+            orig_dict.failed = True
+        else:
+            orig_cleaned = extract_proof_from_response(
+                orig_dict.name, orig_dict.response
+            )
+            if orig_cleaned is None:
+                print("No proof found in original response.")
+                orig_dict.failed = True
+            orig_dict.cleaned_response = orig_cleaned
+        if mut_dict.response is None:
+            print("No response for mutated file.")
+            mut_dict.failed = True
+        else:
+            mut_cleaned = extract_proof_from_response(mut_dict.name, mut_dict.response)
+            if mut_cleaned is None:
+                print("No proof found in mutated response.")
+                mut_dict.failed = True
+            mut_dict.cleaned_response = mut_cleaned
         # Recombine and check compilation
         new_orig_file = recombine_file(orig_dict)
         new_mut_file = recombine_file(mut_dict)
         # Now check each of the re-written files compiles in Coq
-        orig_dict["works"] = check_coq_compile_temp(new_orig_file)
-        mut_dict["works"] = check_coq_compile_temp(new_mut_file)
+        orig_dict.compiles = check_coq_compile_temp(new_orig_file, "orig_test.v", True)
+        mut_dict.compiles = check_coq_compile_temp(new_mut_file, "mut_test.v", True)
 
-    """
-    print("\n--- Harness s ---")
-    if results:
-        print("Successfully mutated files:")
-        for original, modified in results.items():
-            print(f"  {Path(original).name} -> {Path(modified).name}")
-    else:
-        print("No files were successfully mutated.")
-    """
+    # Now we can process our results.
+    # We want a CSV file
+    # file, theorem name, statement, orig_compiles, mut_compiles
+    csv_output = Path("results.csv")
+    with csv_output.open("w", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(
+            (
+                "File",
+                "Theorem Name",
+                "Statement",
+                "Original Compiles",
+                "Mutated Compiles",
+            )
+        )
+        for orig_dict, mut_dict in prompts:
+            if orig_dict.failed or mut_dict.failed:
+                print(
+                    f"Skipping {orig_dict.name} due to failure in original or mutated response.",
+                    file=sys.stderr,
+                )
+                continue
+            # Write to CSV
+            writer.writerow(
+                (
+                    orig_dict.file,
+                    orig_dict.name,
+                    orig_dict.statement,
+                    orig_dict.compiles,
+                    mut_dict.compiles,
+                )
+            )
 
 
 if __name__ == "__main__":
