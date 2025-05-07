@@ -14,7 +14,6 @@ import re
 import argparse
 from pathlib import Path
 import sys
-from typing import overload
 
 import gather_theorems
 from ollama import ChatResponse, Client
@@ -65,10 +64,15 @@ def recombine_file(prompt_dict: Theorem) -> str:
 
 
 def check_coq_compile_temp(
-    file_contents: str, file_name: str | None = None, debug: bool = False
+    folder_path: str,
+    file_contents: str,
+    file_name: str | None = None,
+    debug: bool = False,
 ) -> bool:
     # Write the contents to a temporary file
-    tempfile = Path("tempfile.v" if file_name is None else file_name)
+    tempfile = Path(folder_path).joinpath(
+        Path("tempfile.v" if file_name is None else file_name)
+    )
     tempfile.write_text(file_contents, encoding="utf-8")
     # Check if the file compiles
     result = check_coqc(tempfile)
@@ -210,6 +214,7 @@ def main():
     }
 
     for model in MODELS:
+        print(f"Running model {model}...")
         prompts = overall_prompts[model]
         for orig_prompt, mut_prompt in prompts:
             print("\n--- Original Prompt ---")
@@ -281,10 +286,8 @@ def main():
             new_orig_file = recombine_file(orig_dict)
             new_mut_file = recombine_file(mut_dict)
             # Now check each of the re-written files compiles in Coq
-            orig_dict.compiles = check_coq_compile_temp(
-                new_orig_file, "orig_test.v", True
-            )
-            mut_dict.compiles = check_coq_compile_temp(new_mut_file, "mut_test.v", True)
+            orig_dict.compiles = check_coq_compile_temp(args.input_dir, new_orig_file)
+            mut_dict.compiles = check_coq_compile_temp(args.input_dir, new_mut_file)
 
     # Now we can process our results.
     # We want a CSV file
