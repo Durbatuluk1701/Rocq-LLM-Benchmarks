@@ -14,6 +14,7 @@ import re
 import argparse
 from pathlib import Path
 import sys
+from typing import overload
 
 import gather_theorems
 from ollama import ChatResponse, Client
@@ -196,79 +197,94 @@ def main():
     mut_results = mutate_coq_files(args.input_dir)
 
     # Write all prompts for ollama.
-    prompts: list[tuple[Theorem, Theorem]] = write_all_prompts(args.input_dir)
-
-    MODEL_NAME = "llama3"
-    for orig_prompt, mut_prompt in prompts:
-        print("\n--- Original Prompt ---")
-        print(orig_prompt.prompt)
-        print("\n--- End of Original Prompt ---\n\n")
-        # Send the prompt to ollama and get the response
-        orig_response = send_ollama_request(MODEL_NAME, orig_prompt.prompt)
-        print("\n--- Orig Response ---")
-        resp_content = orig_response.message.content
-        if resp_content:
-            print(resp_content)
-            orig_prompt.response = resp_content
-        else:
-            print("NO ORIG REPONSE CONTENT RECEIVED!!!")
-        print("\n--- End of Orig Response ---\n\n")
-
-        print("\n--- Mutated Prompt ---")
-        print(mut_prompt.prompt)
-        print("\n--- End of Mutated Prompt ---\n\n")
-        # Send the prompt to ollama and get the response
-        mut_response = send_ollama_request(MODEL_NAME, mut_prompt.prompt)
-        print("\n--- mut Response ---")
-        resp_content = mut_response.message.content
-        if resp_content:
-            print(resp_content)
-            mut_prompt.response = resp_content
-        else:
-            print("NO mut REPONSE CONTENT RECEIVED!!!")
-        print("\n--- End of mut Response ---\n\n")
-
-    """
-    At this point, we should have the dictionaries all contain:
-    {
-        "theorem_name": <name>,
-        "context": <context>,
-        "statement": <statement>,
-        "file": <file>,
-        "prompt": <prompt>,
-        "response": <response>
+    MODELS = [
+        "llama3",
+        "deepseek-r1:32b",
+        # "hf.co/florath/CoqLLM-FineTuned-Experiment-Gen0",
+        "mistral",
+        "phi4",
+    ]
+    # MODELS = ["gemma3:1b", "llama3"]
+    overall_prompts: dict[str, list[tuple[Theorem, Theorem]]] = {
+        model_key: write_all_prompts(args.input_dir) for model_key in MODELS
     }
-    """
-    # Now, see if we can run the files that are completed properly.
 
-    for orig_dict, mut_dict in prompts:
-        # Check if the original file is valid
-        if orig_dict.response is None:
-            print("No response for original file.")
-            orig_dict.failed = True
-        else:
-            orig_cleaned = extract_proof_from_response(
-                orig_dict.name, orig_dict.response
-            )
-            if orig_cleaned is None:
-                print("No proof found in original response.")
+    for model in MODELS:
+        prompts = overall_prompts[model]
+        for orig_prompt, mut_prompt in prompts:
+            print("\n--- Original Prompt ---")
+            print(orig_prompt.prompt)
+            print("\n--- End of Original Prompt ---\n\n")
+            # Send the prompt to ollama and get the response
+            orig_response = send_ollama_request(model, orig_prompt.prompt)
+            print("\n--- Orig Response ---")
+            resp_content = orig_response.message.content
+            if resp_content:
+                print(resp_content)
+                orig_prompt.response = resp_content
+            else:
+                print("NO ORIG REPONSE CONTENT RECEIVED!!!")
+            print("\n--- End of Orig Response ---\n\n")
+
+            print("\n--- Mutated Prompt ---")
+            print(mut_prompt.prompt)
+            print("\n--- End of Mutated Prompt ---\n\n")
+            # Send the prompt to ollama and get the response
+            mut_response = send_ollama_request(model, mut_prompt.prompt)
+            print("\n--- mut Response ---")
+            resp_content = mut_response.message.content
+            if resp_content:
+                print(resp_content)
+                mut_prompt.response = resp_content
+            else:
+                print("NO mut REPONSE CONTENT RECEIVED!!!")
+            print("\n--- End of mut Response ---\n\n")
+
+        """
+        At this point, we should have the dictionaries all contain:
+        {
+            "theorem_name": <name>,
+            "context": <context>,
+            "statement": <statement>,
+            "file": <file>,
+            "prompt": <prompt>,
+            "response": <response>
+        }
+        """
+        # Now, see if we can run the files that are completed properly.
+
+        for orig_dict, mut_dict in prompts:
+            # Check if the original file is valid
+            if orig_dict.response is None:
+                print("No response for original file.")
                 orig_dict.failed = True
-            orig_dict.cleaned_response = orig_cleaned
-        if mut_dict.response is None:
-            print("No response for mutated file.")
-            mut_dict.failed = True
-        else:
-            mut_cleaned = extract_proof_from_response(mut_dict.name, mut_dict.response)
-            if mut_cleaned is None:
-                print("No proof found in mutated response.")
+            else:
+                orig_cleaned = extract_proof_from_response(
+                    orig_dict.name, orig_dict.response
+                )
+                if orig_cleaned is None:
+                    print("No proof found in original response.")
+                    orig_dict.failed = True
+                orig_dict.cleaned_response = orig_cleaned
+            if mut_dict.response is None:
+                print("No response for mutated file.")
                 mut_dict.failed = True
-            mut_dict.cleaned_response = mut_cleaned
-        # Recombine and check compilation
-        new_orig_file = recombine_file(orig_dict)
-        new_mut_file = recombine_file(mut_dict)
-        # Now check each of the re-written files compiles in Coq
-        orig_dict.compiles = check_coq_compile_temp(new_orig_file, "orig_test.v", True)
-        mut_dict.compiles = check_coq_compile_temp(new_mut_file, "mut_test.v", True)
+            else:
+                mut_cleaned = extract_proof_from_response(
+                    mut_dict.name, mut_dict.response
+                )
+                if mut_cleaned is None:
+                    print("No proof found in mutated response.")
+                    mut_dict.failed = True
+                mut_dict.cleaned_response = mut_cleaned
+            # Recombine and check compilation
+            new_orig_file = recombine_file(orig_dict)
+            new_mut_file = recombine_file(mut_dict)
+            # Now check each of the re-written files compiles in Coq
+            orig_dict.compiles = check_coq_compile_temp(
+                new_orig_file, "orig_test.v", True
+            )
+            mut_dict.compiles = check_coq_compile_temp(new_mut_file, "mut_test.v", True)
 
     # Now we can process our results.
     # We want a CSV file
@@ -279,29 +295,32 @@ def main():
         writer.writerow(
             (
                 "File",
+                "Model",
                 "Theorem Name",
                 "Statement",
                 "Original Compiles",
                 "Mutated Compiles",
             )
         )
-        for orig_dict, mut_dict in prompts:
-            if orig_dict.failed or mut_dict.failed:
-                print(
-                    f"Skipping {orig_dict.name} due to failure in original or mutated response.",
-                    file=sys.stderr,
+        for model_key in overall_prompts:
+            for orig_dict, mut_dict in overall_prompts[model_key]:
+                if orig_dict.failed or mut_dict.failed:
+                    print(
+                        f"Skipping {orig_dict.name} on {model_key} due to failure in original or mutated response.",
+                        file=sys.stderr,
+                    )
+                    continue
+                # Write to CSV
+                writer.writerow(
+                    (
+                        orig_dict.file,
+                        model_key,
+                        orig_dict.name,
+                        orig_dict.statement,
+                        orig_dict.compiles,
+                        mut_dict.compiles,
+                    )
                 )
-                continue
-            # Write to CSV
-            writer.writerow(
-                (
-                    orig_dict.file,
-                    orig_dict.name,
-                    orig_dict.statement,
-                    orig_dict.compiles,
-                    mut_dict.compiles,
-                )
-            )
 
 
 if __name__ == "__main__":
