@@ -34,24 +34,39 @@ class Theorem:
     failed: bool = False
 
 
-def extract_proof_from_response(theorem_name: str, text: str) -> str | None:
-    theorem_index = text.find(theorem_name)
+proof_blob_regex = re.compile(r"Proof\.(.*?)(Qed\.|Defined\.|```)", re.DOTALL)
 
-    if theorem_index != -1:
-        # Case 1: theorem name found — search after it
-        sliced_text = text[theorem_index:]
-        match = re.search(r"Proof\.(.*?)(Qed|Defined)\.", sliced_text, re.DOTALL)
-        if match:
-            return "Proof." + match.group(1) + match.group(2) + "."
-        else:
-            return None  # No proof segment after theorem name
-    else:
+
+def extract_proof_from_response(theorem_name: str, text: str) -> str | None:
+    # mask all the <think>...</think> out
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
+
+    theorem_match = re.search(
+        rf"(Theorem|Lemma|Corollary|Fact|Proposition|Example)\s+{theorem_name}", text
+    )
+    if theorem_match is None:
         # Case 2: theorem name not found — check for exactly one proof segment
-        matches = re.findall(r"Proof\.(.*?)(Qed|Defined)\.", text, re.DOTALL)
-        if len(matches) == 2:
-            return "Proof." + matches[0] + matches[1] + "."
+        matches = re.findall(proof_blob_regex, text)
+        if len(matches) == 1:
+            match = matches[0]
+            if match[1] == "```":
+                # If the proof ends with a code block, we need to just end it with a Qed.
+                return "Proof." + match[0] + "Qed."
+            return "Proof." + match[0] + match[1]
         else:
             return None  # Either no matches or ambiguous multiple matches
+    else:
+        theorem_index = theorem_match.start()
+        # Case 1: theorem name found — search after it
+        sliced_text = text[theorem_index:]
+        match = re.search(proof_blob_regex, sliced_text)
+        if match:
+            if match.group(2) == "```":
+                # If the proof ends with a code block, we need to just end it with a Qed.
+                return "Proof." + match.group(1) + "Qed."
+            return "Proof." + match.group(1) + match.group(2)
+        else:
+            return None  # No proof segment after theorem name
 
 
 def recombine_file(prompt_dict: Theorem) -> str:
@@ -302,17 +317,13 @@ def main():
                 "Theorem Name",
                 "Statement",
                 "Original Compiles",
+                "Original Failed",
                 "Mutated Compiles",
+                "Mutated Failed",
             )
         )
         for model_key in overall_prompts:
             for orig_dict, mut_dict in overall_prompts[model_key]:
-                if orig_dict.failed or mut_dict.failed:
-                    print(
-                        f"Skipping {orig_dict.name} on {model_key} due to failure in original or mutated response.",
-                        file=sys.stderr,
-                    )
-                    continue
                 # Write to CSV
                 writer.writerow(
                     (
@@ -321,7 +332,9 @@ def main():
                         orig_dict.name,
                         orig_dict.statement,
                         orig_dict.compiles,
+                        orig_dict.failed,
                         mut_dict.compiles,
+                        mut_dict.failed,
                     )
                 )
 
