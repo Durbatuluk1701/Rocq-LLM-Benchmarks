@@ -218,7 +218,7 @@ def main():
     # Write all prompts for ollama.
     MODELS = [
         "llama3.1",
-        "deepseek-r1:32b",
+        # "deepseek-r1:32b",
         "mixtral:8x7b",
         "phi4:14b-fp16",
     ]
