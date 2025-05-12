@@ -70,6 +70,12 @@ def mutate_coq_files(input_dir: Path) -> dict[str, str]:
                 file=sys.stderr,
             )
             continue
+        if "_orig" in original_file.name:
+            print(
+                f"Skipping already orig file: {original_file.name}",
+                file=sys.stderr,
+            )
+            continue
         print(f"\nProcessing file: {original_file.name}")
 
         # 2.0 Ensure that "coqc <file>" works
