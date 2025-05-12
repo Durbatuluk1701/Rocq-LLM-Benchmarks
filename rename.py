@@ -76,9 +76,11 @@ def blast_away_comments(text: str, comments: list[str]) -> str:
     def _blast_comment(m):
         # We can use the comment text to determine the length of the comment
         # and replace it with a space of the same length
-        return " " * len(comments[int(m.group(1))])
+        return ""
 
     text = re.sub(r"__COMMENT_(\d+)__", _blast_comment, text)
+    # now condense newlines
+    text = re.sub(r"\n\s*\n", "\n\n", text)
     return text
 
 

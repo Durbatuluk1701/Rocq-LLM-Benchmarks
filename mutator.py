@@ -17,6 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 import rename
+from rewrite_theorems import rewrite_theorems
 
 
 def check_coqc(filepath: Path) -> bool:
@@ -110,7 +111,7 @@ def mutate_coq_files(input_dir: Path) -> dict[str, str]:
             continue
 
         # 2.3 Apply the "rewrite_theorems" function (Skipped as noted in docstring)
-        # modified_text = rewrite_theorems(modified_text) # Placeholder
+        # final_mod = rewrite_theorems(final_mod)  # Placeholder
 
         # 2.4 Write the modified text to a <name>_modified.v file
         modified_filename = original_file.stem + "_modified.v"
