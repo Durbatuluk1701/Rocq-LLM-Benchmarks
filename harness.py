@@ -227,85 +227,6 @@ def main():
         model_key: write_all_prompts(args.input_dir) for model_key in MODELS
     }
 
-    for model in MODELS:
-        print(f"Running model {model}...")
-        prompts = overall_prompts[model]
-        for orig_prompt, mut_prompt in prompts:
-            print("\n--- Original Prompt ---")
-            print(orig_prompt.prompt)
-            print("\n--- End of Original Prompt ---\n\n")
-            # Send the prompt to ollama and get the response
-            orig_response = send_ollama_request(model, orig_prompt.prompt)
-            print("\n--- Orig Response ---")
-            resp_content = orig_response.message.content
-            if resp_content:
-                print(resp_content)
-                orig_prompt.response = resp_content
-            else:
-                print("NO ORIG REPONSE CONTENT RECEIVED!!!")
-            print("\n--- End of Orig Response ---\n\n")
-
-            print("\n--- Mutated Prompt ---")
-            print(mut_prompt.prompt)
-            print("\n--- End of Mutated Prompt ---\n\n")
-            # Send the prompt to ollama and get the response
-            mut_response = send_ollama_request(model, mut_prompt.prompt)
-            print("\n--- mut Response ---")
-            resp_content = mut_response.message.content
-            if resp_content:
-                print(resp_content)
-                mut_prompt.response = resp_content
-            else:
-                print("NO mut REPONSE CONTENT RECEIVED!!!")
-            print("\n--- End of mut Response ---\n\n")
-
-        """
-        At this point, we should have the dictionaries all contain:
-        {
-            "theorem_name": <name>,
-            "context": <context>,
-            "statement": <statement>,
-            "file": <file>,
-            "prompt": <prompt>,
-            "response": <response>
-        }
-        """
-        # Now, see if we can run the files that are completed properly.
-
-        for orig_dict, mut_dict in prompts:
-            # Check if the original file is valid
-            if orig_dict.response is None:
-                print("No response for original file.")
-                orig_dict.failed = True
-            else:
-                orig_cleaned = extract_proof_from_response(
-                    orig_dict.name, orig_dict.response
-                )
-                if orig_cleaned is None:
-                    print("No proof found in original response.")
-                    orig_dict.failed = True
-                orig_dict.cleaned_response = orig_cleaned
-            if mut_dict.response is None:
-                print("No response for mutated file.")
-                mut_dict.failed = True
-            else:
-                mut_cleaned = extract_proof_from_response(
-                    mut_dict.name, mut_dict.response
-                )
-                if mut_cleaned is None:
-                    print("No proof found in mutated response.")
-                    mut_dict.failed = True
-                mut_dict.cleaned_response = mut_cleaned
-            # Recombine and check compilation
-            new_orig_file = recombine_file(orig_dict)
-            new_mut_file = recombine_file(mut_dict)
-            # Now check each of the re-written files compiles in Coq
-            orig_dict.compiles = check_coq_compile_temp(args.input_dir, new_orig_file)
-            mut_dict.compiles = check_coq_compile_temp(args.input_dir, new_mut_file)
-
-    # Now we can process our results.
-    # We want a CSV file
-    # file, theorem name, statement, orig_compiles, mut_compiles
     csv_output = Path("results.csv")
     with csv_output.open("w", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -323,13 +244,82 @@ def main():
                 "Mutated Failed",
             )
         )
-        for model_key in overall_prompts:
-            for orig_dict, mut_dict in overall_prompts[model_key]:
+        for model in MODELS:
+            print(f"Running model {model}...")
+            prompts = overall_prompts[model]
+            for orig_prompt, mut_prompt in prompts:
+                print("\n--- Original Prompt ---")
+                print(orig_prompt.statement)
+                print("\n--- End of Original Prompt ---\n\n")
+                # Send the prompt to ollama and get the response
+                orig_response = send_ollama_request(model, orig_prompt.prompt)
+                print("\n--- Orig Response ---")
+                resp_content = orig_response.message.content
+                if resp_content:
+                    print(resp_content)
+                    orig_prompt.response = resp_content
+                else:
+                    print("NO ORIG REPONSE CONTENT RECEIVED!!!")
+                print("\n--- End of Orig Response ---\n\n")
+
+                print("\n--- Mutated Prompt ---")
+                print(mut_prompt.statement)
+                print("\n--- End of Mutated Prompt ---\n\n")
+                # Send the prompt to ollama and get the response
+                mut_response = send_ollama_request(model, mut_prompt.prompt)
+                print("\n--- Mut Response ---")
+                resp_content = mut_response.message.content
+                if resp_content:
+                    print(resp_content)
+                    mut_prompt.response = resp_content
+                else:
+                    print("NO MUT REPONSE CONTENT RECEIVED!!!")
+                print("\n--- End of Mut Response ---\n\n")
+
+            # Now, see if we can run the files that are completed properly.
+
+            for orig_dict, mut_dict in prompts:
+                # Check if the original file is valid
+                if orig_dict.response is None:
+                    print("No response for original file.")
+                    orig_dict.failed = True
+                else:
+                    orig_cleaned = extract_proof_from_response(
+                        orig_dict.name, orig_dict.response
+                    )
+                    if orig_cleaned is None:
+                        print("No proof found in original response.")
+                        orig_dict.failed = True
+                    orig_dict.cleaned_response = orig_cleaned
+                if mut_dict.response is None:
+                    print("No response for mutated file.")
+                    mut_dict.failed = True
+                else:
+                    mut_cleaned = extract_proof_from_response(
+                        mut_dict.name, mut_dict.response
+                    )
+                    if mut_cleaned is None:
+                        print("No proof found in mutated response.")
+                        mut_dict.failed = True
+                    mut_dict.cleaned_response = mut_cleaned
+                # Recombine and check compilation
+                new_orig_file = recombine_file(orig_dict)
+                new_mut_file = recombine_file(mut_dict)
+                # Now check each of the re-written files compiles in Coq
+                orig_dict.compiles = check_coq_compile_temp(
+                    args.input_dir, new_orig_file
+                )
+                mut_dict.compiles = check_coq_compile_temp(args.input_dir, new_mut_file)
+
+            # Now we can process our results.
+            # We want a CSV file
+            # file, theorem name, statement, orig_compiles, mut_compiles
+            for orig_dict, mut_dict in prompts:
                 # Write to CSV
                 writer.writerow(
                     (
                         orig_dict.file,
-                        model_key,
+                        model,
                         orig_dict.name,
                         mut_dict.name,
                         orig_dict.statement,
