@@ -74,25 +74,28 @@ def blast_away_comments(text: str, comments: list[str]) -> str:
     return text
 
 
-def collect_ind_defs(text: str) -> set[str]:
-    defs = set()
+def collect_ind_defs(text: str) -> dict[str, str]:
+    defs = {}
     # Find the inductive definitions
     pattern = re.compile(
         r"^\s*Inductive\s+([A-Za-z][A-Za-z0-9_']*)\b(.*?\.)", re.MULTILINE | re.DOTALL
     )
     for m in pattern.finditer(text):
         name = m.group(1)
-        defs.add(name)
+        defs[name] = fresh_valid_name(name, set(defs.keys()))
         body = m.group(2)
         # Find the constructors
         for c in re.finditer(r"\|\s*([A-Za-z][A-Za-z0-9_']*)\b", body):
-            defs.add(c.group(1))
+            defs[c.group(1)] = fresh_valid_name(c.group(1), set(defs.keys()))
+        # find things that used this inductive name in form `IH<m>number`
+        test_pat = re.compile(r"\bIH" + name + r"(\d+)\b")
+        for c in re.finditer(test_pat, text):
+            defs[c.group(0)] = "IH" + defs[name] + c.group(1)
     return defs
 
 
-def collect_other_defs(text: str) -> set[str]:
+def collect_other_defs(text: str, previous_defs: dict[str, str]) -> dict[str, str]:
     """Collect definitions from Fixpoint, Definition, Theorem, Lemma."""
-    defs = set()
     # Pattern to find definitions like 'Fixpoint name ...', 'Definition name ...', etc.
     # It captures the identifier immediately following the keyword.
     pattern = re.compile(
@@ -103,8 +106,10 @@ def collect_other_defs(text: str) -> set[str]:
     for m in pattern.finditer(text):
         if m.group(1) in FORBIDDEN:
             continue
-        defs.add(m.group(1))
-    return defs
+        previous_defs[m.group(1)] = fresh_valid_name(
+            m.group(1), set(previous_defs.keys())
+        )
+    return previous_defs
 
 
 def apply_renames(text: str, rename_map: dict[str, str]) -> str:
@@ -120,28 +125,16 @@ def rename(filetext: str) -> tuple[str, dict[str, str]]:
 
     # Collect all definitions
     ind_defs = collect_ind_defs(masked)
-    other_defs = collect_other_defs(masked)
-    all_defs = ind_defs.union(other_defs)
+    all_renames = collect_other_defs(masked, ind_defs)
 
-    rename_map: dict[str, str] = {}
-
-    user_map = {}
-    # Build rename_map
-    for name in all_defs:
-        if name in user_map:
-            rename_map[name] = user_map[name]
-        else:
-            # generate fresh name, ensuring it doesn't collide with existing defs or user-provided new names
-            rename_map[name] = fresh_valid_name(name, all_defs | set(user_map.values()))
-
-    if not rename_map:
+    if not all_renames:
         print("No definitions found for renaming.", file=sys.stderr)
         sys.exit(1)
 
-    rewritten = apply_renames(masked, rename_map)
+    rewritten = apply_renames(masked, all_renames)
     final = restore_strings(rewritten, strings)
     final = blast_away_comments(rewritten, comments)
-    return final, rename_map
+    return final, all_renames
 
 
 def main():
