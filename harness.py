@@ -34,6 +34,13 @@ class Theorem:
     failed: bool = False
 
 
+def flatten(s: str) -> str:
+    """
+    Flattens a string by removing newlines and extra spaces.
+    """
+    return re.sub(r"\s+", " ", s).strip()
+
+
 proof_blob_regex = re.compile(r"Proof\.(.*?)(Qed\.|Defined\.|```)", re.DOTALL)
 
 
@@ -327,8 +334,8 @@ def main():
                         model,
                         orig_dict.name,
                         mut_dict.name,
-                        orig_dict.statement,
-                        mut_dict.statement,
+                        flatten(orig_dict.statement),
+                        flatten(mut_dict.statement),
                         orig_dict.compiles,
                         orig_dict.failed,
                         mut_dict.compiles,
