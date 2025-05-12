@@ -23,7 +23,7 @@ def check_coqc(filepath: Path) -> bool:
     """Runs coqc on the file and returns True if successful, False otherwise."""
     try:
         result = subprocess.run(
-            ["coqc", str(filepath)],
+            ["coqc", str(filepath), "-Q", ".", "LF"],
             check=False,  # Don't raise exception on failure
             capture_output=True,
             text=True,
