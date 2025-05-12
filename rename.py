@@ -99,7 +99,10 @@ def collect_other_defs(text: str) -> set[str]:
         r"^\s*(?:Fixpoint|Definition|Theorem|Lemma)\s+([A-Za-z][A-Za-z0-9_']*)\b",
         re.MULTILINE,
     )
+    FORBIDDEN = ["f_equal"]
     for m in pattern.finditer(text):
+        if m.group(1) in FORBIDDEN:
+            continue
         defs.add(m.group(1))
     return defs
 
