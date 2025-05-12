@@ -142,9 +142,7 @@ def rename(filetext: str) -> tuple[str, str, dict[str, str]]:
 
     # Collect all definitions
     ind_defs = collect_ind_defs(masked)
-    print(ind_defs)
     all_renames = collect_other_defs(masked, ind_defs)
-    print(all_renames)
 
     if not all_renames:
         print("No definitions found for renaming.", file=sys.stderr)
