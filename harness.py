@@ -217,11 +217,10 @@ def main():
 
     # Write all prompts for ollama.
     MODELS = [
-        # "llama3",
-        "deepseek-r1:70b",
-        # "hf.co/florath/CoqLLM-FineTuned-Experiment-Gen0",
-        # "mistral",
-        # "phi4",
+        "llama3.1",
+        "deepseek-r1:32b",
+        "mixtral:8x7b",
+        "phi4:14b-fp16",
     ]
     # MODELS = ["gemma3:1b", "llama3"]
     overall_prompts: dict[str, list[tuple[Theorem, Theorem]]] = {
