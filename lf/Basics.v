@@ -510,7 +510,6 @@ End Playground.
 
 Definition foo : bool := true.
 
-Check Playground.foo : rgb.
 Check foo : bool.
 
 (* ================================================================= *)

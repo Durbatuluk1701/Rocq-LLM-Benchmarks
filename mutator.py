@@ -89,7 +89,7 @@ def mutate_coq_files(input_dir: Path) -> dict[str, str]:
 
         # 2.2 Apply the "rename" function to the text
         try:
-            modified_text, rename_map = rename.rename(original_text)
+            final_orig, final_mod, rename_map = rename.rename(original_text)
             if not rename_map:
                 print(
                     f"No definitions found to rename in {original_file.name}, skipping.",
@@ -108,9 +108,12 @@ def mutate_coq_files(input_dir: Path) -> dict[str, str]:
 
         # 2.4 Write the modified text to a <name>_modified.v file
         modified_filename = original_file.stem + "_modified.v"
+        orig_filename = original_file.stem + "_orig.v"
         modified_filepath = original_file.with_name(modified_filename)
+        orig_filepath = original_file.with_name(orig_filename)
         try:
-            modified_filepath.write_text(modified_text, encoding="utf-8")
+            orig_filepath.write_text(final_orig, encoding="utf-8")
+            modified_filepath.write_text(final_mod, encoding="utf-8")
             print(f"Written modified file: {modified_filepath.name}")
         except Exception as e:
             print(

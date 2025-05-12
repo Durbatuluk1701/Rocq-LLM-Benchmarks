@@ -489,14 +489,6 @@ Proof.
 
 Print ev.
 
-(* ===>
-
-  Inductive ev : nat -> Prop :=
-  | ev_0 : ev 0
-  | ev_SS : forall n : nat, ev n -> ev (S (S n)))
-
-*)
-
 Check ev_ind :
   forall P : nat -> Prop,
     P 0 ->

@@ -494,7 +494,6 @@ Proof.
 
     Theorem: Addition is commutative.
 
-    Proof: (* FILL IN HERE *)
 *)
 
 (* Do not modify the following line: *)
@@ -509,7 +508,6 @@ Definition manual_grade_for_add_comm_informal : option (nat*string) := None.
 
     Theorem: [(n =? n) = true] for any [n].
 
-    Proof: (* FILL IN HERE *)
 *)
 
 (* Do not modify the following line: *)

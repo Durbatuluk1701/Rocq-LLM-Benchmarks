@@ -5,6 +5,8 @@ import re
 import sys
 from pathlib import Path
 
+my_boundary = r"[\s():\.,;\[\]]"
+
 
 def fresh_valid_name(old_name: str, existing: set[str]) -> str:
     """
@@ -30,9 +32,10 @@ def fresh_valid_name(old_name: str, existing: set[str]) -> str:
         i += 1
 
 
-def mask_comments_and_strings(text: str):
+def mask_comments_and_strings_modules(text: str):
     comment_pattern = re.compile(r"\(\*.*?\*\)", re.DOTALL)
-    string_pattern = re.compile(r'(?<!Warnings\s)"(?:\\.|[^"\\])*"')
+    # string_pattern = re.compile(r'(?<!(Warnings|Notation)\s)"(?:\\.|[^"\\])*"')
+    module_pattern = re.compile(r"Module\s+([\w0-9']+).((\n|.)+)End \1\.", re.MULTILINE)
 
     comments = []
 
@@ -46,8 +49,13 @@ def mask_comments_and_strings(text: str):
         strings.append(m.group(0))
         return f"__STRING_{len(strings)-1}__"
 
-    text_no_comments = comment_pattern.sub(_mask_comment, text)
-    text_masked = string_pattern.sub(_mask_string, text_no_comments)
+    def _mask_module(m):
+        # Mask the module name
+        return f""
+
+    text_masked = comment_pattern.sub(_mask_comment, text)
+    # text_masked = string_pattern.sub(_mask_string, text_no_comments)
+    text_masked = module_pattern.sub(_mask_module, text_masked)
     return text_masked, comments, strings
 
 
@@ -78,19 +86,29 @@ def collect_ind_defs(text: str) -> dict[str, str]:
     defs = {}
     # Find the inductive definitions
     pattern = re.compile(
-        r"^\s*Inductive\s+([A-Za-z][A-Za-z0-9_']*)\b(.*?\.)", re.MULTILINE | re.DOTALL
+        r"^\s*Inductive\s+([A-Za-z][A-Za-z0-9_']*)" + my_boundary + r"(.*?\.)",
+        re.MULTILINE | re.DOTALL,
     )
     for m in pattern.finditer(text):
         name = m.group(1)
+        print(name)
+        print(m.groupdict())
+        FORBIDDEN = ["com", "com_aux"]
+        if name in FORBIDDEN:
+            continue
         defs[name] = fresh_valid_name(name, set(defs.keys()))
         body = m.group(2)
         # Find the constructors
-        for c in re.finditer(r"\|\s*([A-Za-z][A-Za-z0-9_']*)\b", body):
+        for c in re.finditer(r"\|\s*([A-Za-z][A-Za-z0-9_']*)" + my_boundary, body):
             defs[c.group(1)] = fresh_valid_name(c.group(1), set(defs.keys()))
         # find things that used this inductive name in form `IH<m>number`
         test_pat = re.compile(r"\bIH" + name + r"(\d+)\b")
         for c in re.finditer(test_pat, text):
             defs[c.group(0)] = "IH" + defs[name] + c.group(1)
+        # find things that used the inductive principle manually
+        test_pat = re.compile(r"\b" + name + r"_ind\b")
+        for c in re.finditer(test_pat, text):
+            defs[c.group(0)] = defs[name] + "_ind"
     return defs
 
 
@@ -99,10 +117,11 @@ def collect_other_defs(text: str, previous_defs: dict[str, str]) -> dict[str, st
     # Pattern to find definitions like 'Fixpoint name ...', 'Definition name ...', etc.
     # It captures the identifier immediately following the keyword.
     pattern = re.compile(
-        r"^\s*(?:Fixpoint|Definition|Theorem|Lemma)\s+([A-Za-z][A-Za-z0-9_']*)\b",
+        r"^\s*(?:Fixpoint|Definition|Theorem|Lemma)\s+([A-Za-z][A-Za-z0-9_']*)"
+        + my_boundary,
         re.MULTILINE,
     )
-    FORBIDDEN = ["f_equal"]
+    FORBIDDEN = ["f_equal", "string", "app_nil_r"]
     for m in pattern.finditer(text):
         if m.group(1) in FORBIDDEN:
             continue
@@ -116,25 +135,28 @@ def apply_renames(text: str, rename_map: dict[str, str]) -> str:
     # Sort by length desc to avoid partial overlaps
     for old in sorted(rename_map, key=len, reverse=True):
         new = rename_map[old]
-        text = re.sub(rf"\b{re.escape(old)}\b", new, text)
+        text = re.sub(rf"\b{re.escape(old)}({my_boundary})", new + r"\1", text)
     return text
 
 
-def rename(filetext: str) -> tuple[str, dict[str, str]]:
-    masked, comments, strings = mask_comments_and_strings(filetext)
+def rename(filetext: str) -> tuple[str, str, dict[str, str]]:
+    masked, comments, strings = mask_comments_and_strings_modules(filetext)
 
     # Collect all definitions
     ind_defs = collect_ind_defs(masked)
+    print(ind_defs)
     all_renames = collect_other_defs(masked, ind_defs)
+    print(all_renames)
 
     if not all_renames:
         print("No definitions found for renaming.", file=sys.stderr)
         sys.exit(1)
 
+    final_orig = blast_away_comments(masked, comments)
     rewritten = apply_renames(masked, all_renames)
-    final = restore_strings(rewritten, strings)
-    final = blast_away_comments(rewritten, comments)
-    return final, all_renames
+    # final = restore_strings(rewritten, strings)
+    final_mod = blast_away_comments(rewritten, comments)
+    return final_orig, final_mod, all_renames
 
 
 def main():
@@ -142,12 +164,14 @@ def main():
         description="Coq inductive/constructor renaming tool"
     )
     parser.add_argument("input", type=Path, help="Input Coq .v file")
-    parser.add_argument("output", type=Path, help="Output Coq .v file")
+    parser.add_argument("output-orig", type=Path, help="Output Coq .v file")
+    parser.add_argument("output-mod", type=Path, help="Output Coq .v file")
     args = parser.parse_args()
 
     text = args.input.read_text(encoding="utf-8")
-    final, rename_map = rename(text)
-    args.output.write_text(final, encoding="utf-8")
+    final_orig, final_mod, rename_map = rename(text)
+    args.output.write_text(final_orig, encoding="utf-8")
+    args.output.write_text(final_mod, encoding="utf-8")
     print(f"Renamed {len(rename_map)} identifiers.")
 
 
