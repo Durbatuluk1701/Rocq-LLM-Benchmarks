@@ -133,7 +133,8 @@ def mutate_coq_files(input_dir: Path) -> dict[str, str]:
             )
             # Clean up the failed modified file
             try:
-                modified_filepath.unlink()
+                sys.exit(1)
+                # modified_filepath.unlink()
             except OSError as e:
                 print(
                     f"Error removing failed file {modified_filepath.name}: {e}",
