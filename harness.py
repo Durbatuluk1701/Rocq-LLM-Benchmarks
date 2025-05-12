@@ -216,13 +216,13 @@ def main():
     mut_results = mutate_coq_files(args.input_dir)
 
     # Write all prompts for ollama.
-    # MODELS = [
-    #     "llama3.1",
-    #     "deepseek-r1:32b",
-    #     "mixtral:8x7b",
-    #     "phi4:14b-fp16",
-    # ]
-    MODELS = ["gemma3:1b", "llama3"]
+    MODELS = [
+        "llama3.1",
+        "deepseek-r1:32b",
+        "mixtral:8x7b",
+        "phi4:14b-fp16",
+    ]
+    # MODELS = ["gemma3:1b", "llama3"]
     overall_prompts: dict[str, list[tuple[Theorem, Theorem]]] = {
         model_key: write_all_prompts(args.input_dir) for model_key in MODELS
     }
