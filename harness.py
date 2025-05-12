@@ -109,7 +109,12 @@ The statement of the theorem to be proved is as follows:
 ```coq
 {statement}
 ```
-Supply only the complete proof body in the Coq proof language and no extra information.
+Supply only the complete proof body in the Coq proof language following the template:
+```coq
+Proof.
+    <proof body here>
+Qed.
+```
 """
 
 
@@ -217,10 +222,10 @@ def main():
 
     # Write all prompts for ollama.
     MODELS = [
-        "llama3.1",
+        "llama3",
         # "deepseek-r1:32b",
-        "mixtral:8x7b",
-        "phi4:14b-fp16",
+        # "mixtral:8x7b",
+        "phi4",
     ]
     # MODELS = ["gemma3:1b", "llama3"]
     overall_prompts: dict[str, list[tuple[Theorem, Theorem]]] = {
