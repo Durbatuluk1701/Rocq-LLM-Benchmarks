@@ -32,7 +32,7 @@ def fresh_valid_name(old_name: str, existing: set[str]) -> str:
 
 def mask_comments_and_strings(text: str):
     comment_pattern = re.compile(r"\(\*.*?\*\)", re.DOTALL)
-    string_pattern = re.compile(r'"(?:\\.|[^"\\])*"')
+    string_pattern = re.compile(r'(?<!Warnings\s)"(?:\\.|[^"\\])*"')
 
     comments = []
 
