@@ -91,8 +91,6 @@ def collect_ind_defs(text: str) -> dict[str, str]:
     )
     for m in pattern.finditer(text):
         name = m.group(1)
-        print(name)
-        print(m.groupdict())
         FORBIDDEN = ["com", "com_aux"]
         if name in FORBIDDEN:
             continue
