@@ -13,3 +13,4 @@ venv/
 
 **/*_modified.v
 **/*_orig.v
+**/*Makefile.coq*
