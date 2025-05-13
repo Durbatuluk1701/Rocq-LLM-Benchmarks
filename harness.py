@@ -13,6 +13,7 @@ import os
 import re
 import argparse
 from pathlib import Path
+import sys
 
 import gather_theorems
 from ollama import Client, GenerateResponse
@@ -185,6 +186,7 @@ def write_all_prompts(path) -> list[tuple[Theorem, Theorem]]:
                 f"Error: {orig_file} and {mut_file} have different number of theorems."
             )
         all_prompts += zip(orig_prompt, mut_prompt)
+        print("Number of prompts for file", orig_file, ":", len(orig_prompt))
 
     return all_prompts
 
