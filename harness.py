@@ -288,58 +288,57 @@ def main():
                     print("NO MUT REPONSE CONTENT RECEIVED!!!")
                 print("\n--- End of Mut Response ---\n\n")
 
-            # Now, see if we can run the files that are completed properly.
-
-            for orig_dict, mut_dict in prompts:
+                # Now, see if we can run the files that are completed properly.
                 # Check if the original file is valid
-                if orig_dict.response is None:
+                if orig_prompt.response is None:
                     print("No response for original file.")
-                    orig_dict.failed = True
+                    orig_prompt.failed = True
                 else:
                     orig_cleaned = extract_proof_from_response(
-                        orig_dict.name, orig_dict.response
+                        orig_prompt.name, orig_prompt.response
                     )
                     if orig_cleaned is None:
                         print("No proof found in original response.")
-                        orig_dict.failed = True
-                    orig_dict.cleaned_response = orig_cleaned
-                if mut_dict.response is None:
+                        orig_prompt.failed = True
+                    orig_prompt.cleaned_response = orig_cleaned
+                if mut_prompt.response is None:
                     print("No response for mutated file.")
-                    mut_dict.failed = True
+                    mut_prompt.failed = True
                 else:
                     mut_cleaned = extract_proof_from_response(
-                        mut_dict.name, mut_dict.response
+                        mut_prompt.name, mut_prompt.response
                     )
                     if mut_cleaned is None:
                         print("No proof found in mutated response.")
-                        mut_dict.failed = True
-                    mut_dict.cleaned_response = mut_cleaned
+                        mut_prompt.failed = True
+                    mut_prompt.cleaned_response = mut_cleaned
                 # Recombine and check compilation
-                new_orig_file = recombine_file(orig_dict)
-                new_mut_file = recombine_file(mut_dict)
+                new_orig_file = recombine_file(orig_prompt)
+                new_mut_file = recombine_file(mut_prompt)
                 # Now check each of the re-written files compiles in Coq
-                orig_dict.compiles = check_coq_compile_temp(
+                orig_prompt.compiles = check_coq_compile_temp(
                     args.input_dir, new_orig_file
                 )
-                mut_dict.compiles = check_coq_compile_temp(args.input_dir, new_mut_file)
+                mut_prompt.compiles = check_coq_compile_temp(
+                    args.input_dir, new_mut_file
+                )
 
-            # Now we can process our results.
-            # We want a CSV file
-            # file, theorem name, statement, orig_compiles, mut_compiles
-            for orig_dict, mut_dict in prompts:
+                # Now we can process our results.
+                # We want a CSV file
+                # file, theorem name, statement, orig_compiles, mut_compiles
                 # Write to CSV
                 writer.writerow(
                     (
-                        orig_dict.file,
+                        orig_prompt.file,
                         model,
-                        orig_dict.name,
-                        mut_dict.name,
-                        flatten(orig_dict.statement),
-                        flatten(mut_dict.statement),
-                        orig_dict.compiles,
-                        orig_dict.failed,
-                        mut_dict.compiles,
-                        mut_dict.failed,
+                        orig_prompt.name,
+                        mut_prompt.name,
+                        flatten(orig_prompt.statement),
+                        flatten(mut_prompt.statement),
+                        orig_prompt.compiles,
+                        orig_prompt.failed,
+                        mut_prompt.compiles,
+                        mut_prompt.failed,
                     )
                 )
 
