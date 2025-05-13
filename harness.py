@@ -13,10 +13,9 @@ import os
 import re
 import argparse
 from pathlib import Path
-import sys
 
 import gather_theorems
-from ollama import ChatResponse, Client
+from ollama import Client, GenerateResponse
 
 from mutator import check_coqc, mutate_coq_files
 
@@ -194,19 +193,12 @@ def write_all_prompts(path) -> list[tuple[Theorem, Theorem]]:
 ## Formatting at https://github.com/ollama/ollama-python, Custom client
 # Sends a request to our local instance of ollama with our prompt.
 # Returns the response of the prompt.
-def send_ollama_request(model_name: str, prompt: str) -> ChatResponse:
-    client = Client(
-        host="http://localhost:11434", headers={"x-some-header": "some-value"}
-    )
-    client.pull(model_name)
-    response = client.chat(
+def send_ollama_request(
+    client: Client, model_name: str, prompt: str
+) -> GenerateResponse:
+    response = client.generate(
         model=model_name,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            },
-        ],
+        prompt=prompt,
     )
     return response
 
@@ -238,6 +230,7 @@ def main():
     overall_prompts: dict[str, list[tuple[Theorem, Theorem]]] = {
         model_key: write_all_prompts(args.input_dir) for model_key in MODELS
     }
+    client = Client(host="http://localhost:11434")
 
     csv_output = Path("results.csv")
     with csv_output.open("w", encoding="utf-8") as f:
@@ -257,6 +250,7 @@ def main():
             )
         )
         for model in MODELS:
+            client.pull(model)
             print(f"Running model {model}...")
             prompts = overall_prompts[model]
             for orig_prompt, mut_prompt in prompts:
@@ -264,9 +258,9 @@ def main():
                 print(orig_prompt.statement)
                 print("\n--- End of Original Prompt ---\n\n")
                 # Send the prompt to ollama and get the response
-                orig_response = send_ollama_request(model, orig_prompt.prompt)
+                orig_response = send_ollama_request(client, model, orig_prompt.prompt)
                 print("\n--- Orig Response ---")
-                resp_content = orig_response.message.content
+                resp_content = orig_response.response
                 if resp_content:
                     print(resp_content)
                     orig_prompt.response = resp_content
@@ -278,9 +272,9 @@ def main():
                 print(mut_prompt.statement)
                 print("\n--- End of Mutated Prompt ---\n\n")
                 # Send the prompt to ollama and get the response
-                mut_response = send_ollama_request(model, mut_prompt.prompt)
+                mut_response = send_ollama_request(client, model, mut_prompt.prompt)
                 print("\n--- Mut Response ---")
-                resp_content = mut_response.message.content
+                resp_content = mut_response.response
                 if resp_content:
                     print(resp_content)
                     mut_prompt.response = resp_content
