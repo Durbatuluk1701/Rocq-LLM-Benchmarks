@@ -18,7 +18,7 @@ We also conducted preliminary experiments with other models available through Ol
 To isolate the role of human-readable identifiers (such as \texttt{Theorem}, \texttt{Lemma}, \texttt{Inductive}, etc.), we applied a preprocessing pipeline:
 
 \begin{itemize}
-  \item \textbf{Identifier Detection and Renaming:} We located all top-level identifiers associated with theorems, lemmas, facts, and inductive constructors, then renamed them to opaque, non-descriptive tokens.
+  \item \textbf{Identifier Detection and Renaming:} We located all top-level identifiers associated with theorems, lemmas, facts, and inductive constructors, then renamed them to opaque, non-descriptive tokens. During this process, we also had to repair certain automatically generated names created by Coq, such as those used for inductive hypotheses. In addition, we preserved a small set of exceptional identifiers from the \textit{Logical Foundations} source, (\texttt{com}, \texttt{com\_aux}, \texttt{f\_equal}, \texttt{string}, and \texttt{app\_nil\_r}), which caused correctness or dependency issues when renamed.
   \item \textbf{Comment Removal:} All comments were stripped from the files to prevent LLMs from accessing potentially informative natural language.
   \item \textbf{Module Filtering:} Entire modules were excluded from the prompt context to avoid issues with internal naming scopes and to simplify parsing.
 \end{itemize}
@@ -43,7 +43,7 @@ Letting \( D = \{x_i\} \) be a dataset of proof goals and \( f_\theta(x_i) \) th
 
 \[
 \text{Accuracy} = \frac{1}{|D|} \sum_{i=1}^{|D|} \mathbb{1}\{ \text{Coq}(f_\theta(x_i)) = \text{valid} \}
-\]
+\
 
 \subsection{Strengths and Weaknesses}
 At this stage of the project, a full comparative analysis is still ongoing. However, preliminary observations suggest that both LLaMA 3.1 and Phi-4 can occasionally generate valid Coq proofs under zero-shot conditions, even when human-readable identifiers are obfuscated. Future work will involve:
