@@ -153,6 +153,54 @@ def analyze_comp_mismatches_no_failures(df):
     )
 
 
+def analyze_comp_mismatches_no_failures_model_specific(df):
+    """
+    Addresses Point 3: Point 1 stats if we remove any cases where EITHER failed.
+    (Interpreted as: Original Failed is False AND Mutated Failed is False)
+    """
+    print("\n--- 3.1. Compilation Mismatches (Excluding Any Failures) ---")
+
+    # Filter out rows where any failure occurred
+    df_no_failures = df[~df["Original Failed"] & ~df["Mutated Failed"]]
+    total_entries_no_failures = len(df_no_failures)
+
+    if total_entries_no_failures == 0:
+        print("No entries left after filtering out all failures.")
+        return
+
+    print(
+        f"Entries considered (Original Failed=False AND Mutated Failed=False): {total_entries_no_failures}"
+    )
+
+    MODEL_KEYS = ["llama3.1", "phi4"]
+
+    print("-" * 20)
+    for model in MODEL_KEYS:
+        print("-" * 20)
+        print(f"\nModel: {model}")
+        orig_comp_not_mut_comp = df_no_failures[
+            (df_no_failures["Model"] == model)
+            & df_no_failures["Original Compiles"]
+            & ~df_no_failures["Mutated Compiles"]
+        ].shape[0]
+        mut_comp_not_orig_comp = df_no_failures[
+            (df_no_failures["Model"] == model)
+            & ~df_no_failures["Original Compiles"]
+            & df_no_failures["Mutated Compiles"]
+        ].shape[0]
+
+        print("Compilation Mismatches (in this no-failure subset):")
+        print(
+            f"  - Original Compiled AND Mutated Did NOT Compile: {orig_comp_not_mut_comp} ({orig_comp_not_mut_comp/total_entries_no_failures*100:.2f}%)"
+        )
+        print(
+            f"  - Original Did NOT Compile AND Mutated Compiled: {mut_comp_not_orig_comp} ({mut_comp_not_orig_comp/total_entries_no_failures*100:.2f}%)"
+        )
+        print("-" * 20)
+
+    print("-" * 20)
+
+
 def determine_best_model(df):
     """
     Addresses Point 4: Which model performed best overall.
@@ -435,6 +483,8 @@ def main_analysis_flow():
 
     # Point 3
     analyze_comp_mismatches_no_failures(df)
+    # point 3.1
+    analyze_comp_mismatches_no_failures_model_specific(df)
 
     # Point 4
     determine_best_model(df)
