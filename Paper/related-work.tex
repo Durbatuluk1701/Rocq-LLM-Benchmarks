@@ -14,6 +14,8 @@ despite input obfuscation.
 {Evaluating LLM-generated code in Coq}
 Proof Automation with Large Language Models
 
+L
+
 \subsection
 {Creating datasets}
 Learning to Prove Theorems via
@@ -31,6 +33,24 @@ strictness of the Coq theorem prover.
 CodeJudge (Tong and Zhang, 2024) explores
 alternative approaches of verification
 employed to 
+
+Our target domain, Coq proofs, are interesting in the method of judging a successful output.
+As our target domain is Proof scripts in a theorem prover,
+the correctness of the generated code is proved true
+simply by executing the proof in the theorem prover.
+If code executes without an error it is guaranteed to be correct.
+In typical LLM code generation,
+there are a few criteria for judging the quality of LLM generated code.  
+Behavioral comparison can be accomplished by comparing the outputs of a ground truth program 
+to the outputs of the LLM code. 
+Text similarity between ground truth code and the LLM output can be used, 
+especially in cases were (insert stuff). 
+Code Judge cite3 is a novel technique that uses an LLM to judge output bla bla. 
+While we chose to use code correctness as evaluation criteria 
+this was an experimental design decision, not a necessity.
+If the use case for LLM proof generation is to assist 
+rather than replace a programmer, 
+more flexible evaluation criteria, as those above, may be more relevant. 
 
 CodeJudge: Evaluating Code Generation 
 with Large Language Models
