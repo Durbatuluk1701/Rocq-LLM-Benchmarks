@@ -1,14 +1,9 @@
-% This is samplepaper.tex, a sample chapter demonstrating the
-% LLNCS macro package for Springer Computer Science proceedings;
-% Version 2.20 of 2017/10/04
-%
 \documentclass[runningheads]{llncs}
 %
+\usepackage[margin=1.25in]{geometry}
 \usepackage{graphicx}
 % Used for displaying a sample figure. If possible, figure files should
 % be included in EPS format.
-%\usepackage{tikz}
-%\usetikzlibrary{arrows}
 \usepackage{verbatim}
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
@@ -32,6 +27,8 @@
 % \renewcommand\UrlFont{\color{blue}\rmfamily}
 \usepackage[breaklinks=true]{hyperref}
 \usepackage{breakcites}
+\usepackage{listings}
+\usepackage{microtype}
 \renewcommand\UrlFont{\color{blue}\rmfamily}
 
 \begin{document}
@@ -50,17 +47,17 @@
 %
 \maketitle              % typeset the header of the contribution
 %
-\include{abstract}
+\input{abstract}
 %
 %
 %
-\include{introduction}
-\include{related-work}
-\include{dataset}
-\include{methodology}
-\include{experiment}
-\include{conclusion}
-
+\input{introduction}
+\input{related-work}
+\input{dataset}
+\input{methodology}
+\input{experiment}
+\input{results.tex}
+\input{conclusion}
 
 %
 % 
@@ -71,7 +68,6 @@
 %
 %\bibliographystyle{splncs04}
 \bibliographystyle{splncsnat}
-%\bibliography{sldg}
-\bibliography{bib/sldg}
+\bibliography{references}
 %
 \end{document}

@@ -1,3 +1,59 @@
-
 \section{Introduction}
 \label{sec:introduction}
+
+\subsection{Background and Motivation}
+\label{sec:intro_background}
+
+Large Language Models (LLMs) have demonstrated remarkable capabilities across a diverse array of natural language processing tasks and are increasingly being explored for their potential in specialized domains requiring complex reasoning, such as software development, mathematics, and formal verification. Within the realm of computer science, formal methods provide rigorous, mathematically-grounded techniques for specifying, developing, and verifying software and hardware systems. Theorem provers, such as the Coq proof assistant, are pivotal tools in formal methods, enabling users to construct machine-checked proofs of correctness. The prospect of leveraging LLMs to assist or even automate aspects of the formal proof development process in Coq could significantly lower the barrier to entry for formal methods and enhance productivity for experienced users.
+
+However, the effective integration of LLMs into formal reasoning workflows necessitates a clear understanding of their actual deductive capabilities, as distinct from their ability to recall or replicate patterns seen during training. As LLMs are trained on vast swathes of publicly available text and code, including potentially many formal proofs and tutorials, their performance on standard benchmarks may not accurately reflect true generalization or reasoning prowess.
+
+\subsection{Problem Statement}
+\label{sec:intro_problem}
+
+A critical issue in evaluating LLMs for theorem proving is the risk of benchmark contamination or ``memorization.'' Many established benchmarks for formal methods consist of static sets of problems that may have been part of the LLMs' training data. Consequently, an LLM might successfully ``solve'' a benchmark problem not by deducing the solution, but by recalling it, or parts of it, from its training set. This phenomenon makes it difficult to:
+\begin{enumerate}
+    \item Reliably compare the true reasoning abilities of different LLMs.
+    \item Ascertain whether LLMs genuinely ``understand'' the underlying semantics of formal statements and proof strategies.
+    \item Gauge their robustness when faced with novel-looking but semantically equivalent problems.
+\end{enumerate}
+
+There is, therefore, a pressing need for evaluation methodologies that can mitigate the effects of data leakage and assess an LLM's ability to generalize its reasoning capabilities beyond an exact replication of previously encountered examples.
+
+\subsection{Proposed Solution and Contributions}
+\label{sec:intro_solution}
+
+This project addresses the aforementioned challenges by developing and evaluating a dynamic benchmark generation strategy for Coq theorem proving tasks. The core idea is to create new test cases by applying programmatic transformations to existing, well-understood theorems, specifically those from the widely recognized \emph{Logical Foundations} series by \citet{PierceSF:LF2024}. These transformations are designed to alter the syntactic appearance of the theorems while preserving their underlying logical semantics and provability. In this study, the primary transformation implemented is the systematic renaming of identifiers (such as variables and local definitions) within the Coq theorem statements and their contexts.
+
+The experimental methodology involved the following steps:
+\begin{enumerate}
+    \item \textbf{Data Collection:} Coq files were sourced from the \emph{Logical Foundations} dataset.
+    \item \textbf{Theorem Mutation:} A transformation process was applied to these files to automatically rename identifiers, creating a parallel set of mutated (perturbed) files.
+    \item \textbf{Task Generation:} From both the original and mutated files, individual theorem statements were extracted.
+    \item \textbf{LLM Evaluation:} Two contemporary LLMs, \texttt{llama3.1} and \texttt{phi4}, were prompted to generate proofs for each extracted theorem (both original and its renamed counterpart).
+    \item \textbf{Verification:} The LLM-generated outputs were first assessed for structural usability (i.e., whether they formed a coherent Coq proof script). Usable scripts were then compiled using the Coq compiler (\texttt{coqc}) to rigorously verify their correctness.
+\end{enumerate}
+
+By comparing the LLMs' success rates and the nature of their outputs on original versus renamed theorems, this study aims to shed light on their sensitivity to superficial syntactic variations. A significant drop in performance on renamed theorems would suggest a reliance on memorized surface patterns, whereas comparable performance would indicate a more robust, semantic understanding.
+
+The \textbf{primary contributions} of this work are:
+\begin{itemize}
+    \item An implemented methodology and tool for generating perturbed Coq theorem proving tasks based on identifier renaming, aimed at reducing benchmark leakage in LLM evaluations.
+    \item An empirical evaluation of two modern LLMs (\texttt{llama3.1} and \texttt{phi4}) on this dynamic benchmark, providing initial data on their performance and consistency when faced with original and syntactically varied theorems.
+    \item Insights into the current capabilities and limitations of LLMs in the context of formal theorem proving, specifically concerning their ability to generalize beyond surface-level syntax.
+\end{itemize}
+
+This research represents a step towards developing more authentic and reliable assessments of LLM reasoning abilities in the demanding domain of formal methods.
+
+\subsection{Report Outline}
+\label{sec:intro_outline}
+
+The remainder of this report is structured as follows:
+\begin{itemize}
+    \item \textbf{Chapter 2 (Background and Related Work):} Discusses relevant literature on LLMs in code and formal reasoning, existing Coq benchmarks, program transformation techniques, and challenges in LLM evaluation.
+    \item \textbf{Chapter 3 (Dataset Collection):} Details the data corpus, its significance in the Coq community, and the process of extracting theorems from the \emph{Logical Foundations} dataset.
+    \item \textbf{Chapter 4 (Methodology):} Explains the design of the theorem transformation engine focusing on identifier renaming, and the overall benchmark generation process, as well as the LLM prompting strategy.
+    \item \textbf{Chapter 5 (Experimental Setup):} Describes the LLMs tested, the precise task definition, the evaluation metrics employed (usability and Coq compilation), and the experimental environment.
+    \item \textbf{Chapter 6 (Results):} Presents the quantitative and qualitative findings from the experiments, comparing LLM performance on original versus perturbed theorems.
+    \item \textbf{Chapter 7 (Conclusion and Future Work):} Summarizes the key contributions and suggests avenues for future research in this area.
+\end{itemize}

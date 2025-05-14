@@ -1,6 +1,9 @@
 \begin{abstract}
-The abstract should briefly summarize the contents of the paper in
-15--250 words.
+The application of Large Language Models (LLMs) to complex reasoning tasks, particularly in the domain of formal methods and theorem proving, holds significant promise. However, evaluating the true deductive capabilities of these models is challenging due to their potential exposure to existing benchmarks during training, leading to issues of memorization rather than genuine understanding. This project addresses this challenge by developing and evaluating a dynamic benchmark suite for the Coq proof assistant. We systematically generate test cases by applying semantic-preserving transformations---specifically, the renaming of identifiers---to theorems sourced from the well-known \emph{Logical Foundations} dataset. 
 
-\keywords{First keyword  \and Second keyword \and Another keyword.}
+The performance of two contemporary LLMs, \texttt{llama3.1} and \texttt{phi4}, was assessed by tasking them to generate proofs for both original and transformed theorems. Proof attempts were first evaluated for structural usability and then compiled using the Coq compiler (\texttt{coqc}) to verify correctness. 
+
+This approach aims to determine the extent to which LLM performance is affected by superficial syntactic changes, thereby providing insights into their reliance on learned surface patterns versus deeper semantic reasoning. This work contributes a methodology for creating more robust benchmarks for LLM-based theorem proving and offers initial findings on the sensitivity of modern LLMs to such perturbations.
+
+\keywords{LLMs \and Theorem Proving \and Coq \and Benchmarking \and Formal Methods}
 \end{abstract}
