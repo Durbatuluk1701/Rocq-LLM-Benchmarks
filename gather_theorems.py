@@ -51,7 +51,10 @@ def main():
     parser = argparse.ArgumentParser(
         description="Gather theorem statements and their contexts from a Coq file"
     )
-    parser.add_argument("input", type=Path, help="Input Coq .v file")
+    parser.add_argument("--input", type=Path, help="Input Coq .v file")
+    parser.add_argument(
+        "--input_dir", type=Path, help="Input Directory of Coq .v files"
+    )
     parser.add_argument(
         "--output",
         "-o",
@@ -60,14 +63,28 @@ def main():
     )
     args = parser.parse_args()
 
-    text = args.input.read_text(encoding="utf-8")
-    theorems = collect_theorems(text)
+    if args.input and args.input_dir:
+        raise ValueError(
+            "Please provide either an input file or an input directory, not both."
+        )
 
-    output = {"file": str(args.input), "theorems": theorems}
+    overall_theorems = []
+    if args.input_dir:
+        # get all .v files in the directory
+        files = list(args.input_dir.glob("**/*.v"))
+        for file in files:
+            print(f"Processing {file}")
+            text = file.read_text(encoding="utf-8")
+            overall_theorems.extend(collect_theorems(text))
+    else:
+        text = args.input.read_text(encoding="utf-8")
+        theorems = collect_theorems(text)
+
+    output = {"file": str(args.input), "theorems": overall_theorems}
 
     if args.output:
         args.output.write_text(json.dumps(output, indent=2), encoding="utf-8")
-        print(f"Wrote {len(theorems)} theorems to {args.output}")
+        print(f"Wrote {len(overall_theorems)} theorems to {args.output}")
     else:
         print(json.dumps(output, indent=2))
 

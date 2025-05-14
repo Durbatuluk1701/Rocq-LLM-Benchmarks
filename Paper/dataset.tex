@@ -1,9 +1,81 @@
-% • Describe your dataset, how it is collected, feature list, data statistics (e.g., feature/target 
+% • Describe your dataset, how it is collected, feature list, data statistics (e.g., feature/target
 % distribution, male/female, number of subjects)
-%  • What is the data preprocessing you did (normalization, missing value, feature selection, sampling 
-% …)? 
-% • What are the inputs and output? 
+%  • What is the data preprocessing you did (normalization, missing value, feature selection, sampling
+% …)?
+% • What are the inputs and output?
 % • What is the data size (training/validation/testing)?
 
-\section{Dataset}
-\label{sec:dataset}
+\section{Dataset Collection and Preprocessing}
+\label{sec:dataset_collection_preprocessing}
+
+The foundation of our dynamic benchmark suite is a carefully selected corpus of Coq theorems. This section details the source of these theorems, its significance within the Coq community, the programmatic methodology employed for extracting theorem statements and their associated contexts, and an overview of the resulting dataset's characteristics.
+
+\subsection{The \emph{Logical Foundations} Data Corpus}
+\label{sec:data_corpus}
+
+For this study, the primary source of Coq theorems is the \emph{Logical Foundations} volume from the Software Foundations series by \citet{PierceSF:LF2024}. This series is a widely recognized and highly regarded resource in the formal methods and programming languages communities.
+
+The significance of \emph{Logical Foundations} as a data source includes:
+\begin{itemize}
+    \item \textbf{Pedagogical Value:} It serves as a popular introductory textbook for learning the Coq proof assistant and fundamental concepts in logic, functional programming, and programming language theory (e.g., operational semantics, type systems). Its theorems are often clearly stated and accompanied by detailed, didactic proofs.
+    \item \textbf{Structured Content:} The Coq files (\texttt{.v} files) associated with the book are well-structured and publicly available, making them amenable to automated processing.
+    \item \textbf{Fundamental Concepts:} The theorems cover a range of foundational topics, providing a solid baseline for evaluating an LLM's reasoning capabilities on core logical constructs, inductive types, and recursive definitions commonly encountered in formal verification.
+    \item \textbf{Community Relevance:} Due to its widespread adoption in academic courses and for self-study, it is plausible that LLMs may have encountered this material during their training. This makes it an interesting test case for our hypothesis that superficial transformations can effectively challenge memorization and test deeper understanding.
+    \item \textbf{Manageable Scope:} The size and complexity of \emph{Logical Foundations} are substantial enough to provide a diverse set of theorems while remaining manageable for systematic extraction and experimentation within the scope of this project.
+\end{itemize}
+The choice of this corpus allows for the evaluation of LLMs on theorems that are both fundamental and representative of common Coq usage patterns, particularly in educational and foundational Programming Language (PL) research contexts.
+
+\subsection{Theorem Extraction Methodology}
+\label{sec:theorem_extraction}
+
+To create our initial dataset of theorems from the \emph{Logical Foundations} \texttt{.v} files, we developed a custom Python script. The primary goal of this script was to parse each Coq source file and extract all formal statements defined using Coq's \texttt{Theorem}, \texttt{Lemma}, or \texttt{Fact} keywords, along with the necessary contextual information required to understand and prove them.
+
+The extraction process, implemented in the \texttt{collect\_theorems} function operates as follows:
+\begin{enumerate}
+    \item \textbf{Input Processing:} The script takes a Coq source file (\texttt{.v} file) as input and reads its content into a string. The text is split into lines to facilitate iterative processing.
+    \item \textbf{Theorem Identification:} It iterates through the lines of the file, using regular expressions to detect the declaration of theorems, lemmas, or facts. The specific pattern employed for this initial detection is \texttt{\textbackslash s*(Theorem|Lemma|Fact)\textbackslash s+([A-Za-z][A-Za-z0-9\_']*)}. This pattern captures the declaration type (e.g., ``Theorem'') and its assigned name (e.g., ``plus\_comm'').
+    \item \textbf{Statement Accumulation:} Upon identifying a theorem declaration, the script accumulates all subsequent lines belonging to the statement itself. This accumulation continues until a line matching the pattern \texttt{\textbackslash s*Proof\textbackslash .} is encountered, which typically signifies the beginning of the proof script and thus the end of the theorem statement. The collected lines are concatenated to form the complete theorem statement. A trailing period is appended if not already present, ensuring syntactic completeness for standalone presentation.
+    \item \textbf{Context Preservation:} For each extracted theorem, the script also captures the entire content of the Coq file that precedes the theorem's declaration line. This ``context'' is crucial, as it includes all necessary \texttt{Require}, \texttt{Import}, \texttt{Inductive} type definitions, \texttt{Fixpoint} definitions, \texttt{Notation} declarations, and prior lemmas or definitions that the current theorem might depend upon. Without this context, a theorem statement would often be unprovable or even syntactically invalid.
+    \item \textbf{Structured Output:} The script compiles a list of dictionaries, where each dictionary represents an extracted theorem and contains the following key-value pairs:
+    \begin{itemize}
+        \item \texttt{"type"}: The type of the declaration (e.g., ``Theorem'', ``Lemma'', ``Fact'').
+        \item \texttt{"name"}: The declared name of the theorem.
+        \item \texttt{"statement"}: The full text of the theorem statement, up to (but not including) the \texttt{Proof.} line.
+        \item \texttt{"context"}: The complete Coq code from the beginning of the file up to the line immediately preceding the theorem's declaration.
+    \end{itemize}
+    This structured data, typically serialized as a JSON object, then serves as the input for the subsequent transformation and LLM evaluation phases. This constitutes the primary data preprocessing step, transforming raw \texttt{.v} files into a structured dataset of theorem-context pairs.
+\end{enumerate}
+
+This regex-based approach was chosen for its simplicity and effectiveness in parsing the relatively well-structured Coq files found in \emph{Logical Foundations}. While a full Coq Abstract Syntax Tree (AST) parser could offer more robustness, the current method proved adequate for accurately extracting the required components for this project's scope.
+
+\subsection{Data Statistics and Characteristics}
+\label{sec:data_statistics}
+
+The theorem extraction process was applied to all available Coq source files within the selected version of the \emph{Logical Foundations} dataset. This resulted in a comprehensive collection of formal statements suitable for our benchmarking task.
+
+The key statistics of the collected base dataset are as follows:
+\begin{itemize}
+    \item \textbf{Total \texttt{.v} Files Processed:} 16
+    \item \textbf{Total Statements Extracted:} 508
+    \item \textbf{Distribution by Type:}
+    \begin{itemize}
+        \item \texttt{Theorem}: 389
+        \item \texttt{Lemma}: 115
+        \item \texttt{Fact}: 4
+    \end{itemize}
+    \item \textbf{Statement Length Characteristics:}
+    \begin{itemize}
+        \item Minimum lines: 1
+        \item Maximum lines: 55
+        \item Average lines: 2.64
+    \end{itemize}
+    \item \textbf{Context Length Characteristics:}
+    \begin{itemize}
+        \item Minimum lines: 24
+        \item Maximum lines: 2729
+        \item Average lines: 887.41
+    \end{itemize}
+    \item \textbf{Input/Output Definition:} For the purpose of this study, each extracted theorem forms a data point. The \textbf{input} for our subsequent LLM evaluation consists of the combined \texttt{"context"} and \texttt{"statement"}. The expected \textbf{output} from the LLM is a Coq proof script for the given statement.
+    \item \textbf{Dataset Size for Evaluation:} A subset of all the above theorems was utilized for our evaluation. This subset was 424 theorems that were amiable to LLM intervention. In particular, our proof repair mechanism was unable to reconcile proof's nested within a module, \textbf{as name shadowing caused major issues}. For this reason, only the 424 extracted statements constitute our evaluation benchmark. No distinct training, validation, or testing splits are created from this dataset by our methodology, as the objective is to evaluate pre-trained LLMs on these specifically constructed problems.
+\end{itemize}
+This initial dataset, characterized by these statistics, provides a rich and varied set of formal reasoning problems. The subsequent transformation process builds upon this base to generate the dynamic benchmarks used for LLM evaluation.
