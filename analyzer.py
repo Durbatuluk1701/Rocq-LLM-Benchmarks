@@ -240,18 +240,23 @@ def determine_best_model(df):
         # ) * 100
 
         models_summary.append(summary)
-        
-        df_no_failures = model_df[~model_df["Original Failed"] & ~model_df["Mutated Failed"]]
+
+        df_no_failures = model_df[
+            ~model_df["Original Failed"] & ~model_df["Mutated Failed"]
+        ]
         total_model_entries = len(df_no_failures)
         if total_model_entries == 0:
             continue
 
-        summary = {"Model": model_name + "(no failures)", "Entries": total_model_entries}
+        summary = {
+            "Model": model_name + "(no failures)",
+            "Entries": total_model_entries,
+        }
         for col in COLUMNS_TO_ANALYZE:
             count = df_no_failures[col].sum()
             summary[f"{col} (%)"] = (count / total_model_entries) * 100
             summary[f"{col} (Count)"] = count
-        
+
         models_summary.append(summary)
 
     if not models_summary:
