@@ -5,15 +5,6 @@
 
 \section{Methodology}
 \label{sec:methodology}
-\subsection{Learning Algorithms}
-
-Our study explores the capabilities of large language models (LLMs) in interacting with formal proof code, specifically Coq files from the \textit{Logical Foundations} textbook. We used two open-source LLMs---\textbf{LLaMA 3.1} \cite{grattafiori2024llama3herdmodels} and \textbf{Phi-4} \cite{abdin2025phi4reasoningtechnicalreport}---run locally via \href{https://ollama.com}{Ollama} on an HPC cluster equipped with an Nvidia A100 GPU. No fine-tuning was applied; all models were used in their original zero-shot inference configuration.
-
-\subsection{Model Description and Setup}
-
-Both LLMs were queried in a \textbf{zero-shot} setting, where the model was given all code context from the start of the file up to a target proof obligation. The prompt consisted of the modified source code and a specific location where a proof (e.g., for a \texttt{Theorem}, \texttt{Lemma}, or \texttt{Fact}) was missing. The model's task was to generate a proof term that would satisfy the Coq compiler.
-
-We also conducted preliminary experiments with other models available through Ollama, including \textbf{Gemma}, \textbf{Qwen3}, \textbf{DeepSeek R1 32B}, \textbf{Mistral 7B}, and \textbf{Mixtral 8x7B}. However, in early testing, these models did not produce valid or useful output at a high enough rate to justify running them across the full dataset. As a result, we focused our primary experiments on LLaMA 3.1 and Phi-4.
 
 To isolate the role of human-readable identifiers (such as \texttt{Theorem}, \texttt{Lemma}, \texttt{Inductive}, etc.), we applied a preprocessing pipeline:
 
@@ -25,7 +16,7 @@ To isolate the role of human-readable identifiers (such as \texttt{Theorem}, \te
 
 By comparing LLM performance before and after identifier renaming, we evaluated whether the models exploit these names as semantic cues.
 
-\subsection{Learning Objective}
+\subsection{Evaluation Objective}
 
 Our goal was not to train the models, but to evaluate their robustness under controlled perturbations in source code. Although we did not formulate a formal learning objective with a loss function, our evaluation criterion can be thought of as a binary classification over model outputs:
 
@@ -42,14 +33,19 @@ where \( x \) is the full Coq file with the model-generated proof inserted. We c
 Letting \( D = \{x_i\} \) be a dataset of proof goals and \( f_\theta(x_i) \) the LLM's generated proof for input \( x_i \), the empirical success rate is:
 
 \[
-\text{Accuracy} = \frac{1}{|D|} \sum_{i=1}^{|D|} \mathbb{1}\{ \text{Coq}(f_\theta(x_i)) = \text{valid} \}
+\text{Accuracy} = \frac{1}{|D|} \sum_{i=1}^{|D|} \text{Success}(f_\theta(x_i))
 \]
 
 \subsection{Strengths and Weaknesses}
-At this stage of the project, a full comparative analysis is still ongoing. However, preliminary observations suggest that both LLaMA 3.1 and Phi-4 can occasionally generate valid Coq proofs under zero-shot conditions, even when human-readable identifiers are obfuscated. Future work will involve:
+We consider this pipeline broadly successful: it allowed us to systematically remove semantic hints embedded in names while maintaining proof validity across the \textit{Logical Foundations} files.
 
-\begin{itemize}
-  \item Assessing proof correctness beyond compiler acceptance (e.g., comparing proof structures or logical strategies).
-  \item Introducing prompt engineering strategies like few-shot examples and ``proof context'' augmentation.
-  \item Evaluating sensitivity to varying identifier schemes and levels of abstraction.
-\end{itemize}
+A key strength of our approach is its generality: it can be applied to a wide range of Coq source files with minimal manual intervention. This made it feasible to process an entire textbook-scale dataset.
+
+However, we encountered several limitations that required pragmatic compromises.
+First, Coq's support for nested modules led to name shadowing and scoping ambiguities during transformation.
+To address this, we excluded all code defined within Module blocks, which limited our dataset coverage.
+Second, as described previously, a small number of identifiers were excluded from renaming due to internal dependencies in the \textit{Logical Foundations} textbook. Some of these were recreated for pedagogical purposes or caused scoping issues and likely will not pose the same challenge in other real-world datasets.
+
+Looking forward, we believe that more principled approaches to identifier transformation are possible. One promising direction is leveraging Coq's extraction mechanism to perform semantically sound renaming while avoiding scoping issues.
+We also see value in extending our transformation strategy beyond naming.
+Specifically, we explored (but were unable to finish) applying logical equivalences, which could help evaluate whether LLMs can recognize and generalize over structurally identical but syntactically different proof goals.

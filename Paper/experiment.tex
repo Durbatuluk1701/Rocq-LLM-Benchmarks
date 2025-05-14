@@ -11,3 +11,44 @@
 
 \section{Experiment}
 \label{sec:experiment}
+
+Our study explores the capabilities of large language models (LLMs) in interacting with formal proof code, specifically Coq files from the \textit{Logical Foundations} textbook. We used two open-source LLMs---\textbf{LLaMA 3.1} \cite{grattafiori2024llama3herdmodels} and \textbf{Phi-4} \cite{abdin2025phi4reasoningtechnicalreport}---run locally via \href{https://ollama.com}{Ollama} on an HPC cluster equipped with two Nvidia A100 GPUs. No fine-tuning was applied.
+
+Both LLMs were queried in a \textbf{zero-shot} setting with no chat history,
+where the model was given all code context from the start of the file up to a target proof obligation.
+The prompt consisted of the source code up to a theorem statement with a missing proof. 
+The model's task was to generate a proof that would satisfy the Coq compiler.
+We wrapped each prompt in a fixed natural language template that instructed the model to generate a Coq proof body:
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize,columns=fullflexible,frame=single,keepspaces=true]
+Prove the following theorem {name} in the Coq proof language.
+The context for the proof is as follows:
+```coq
+{context}
+```
+The statement of the theorem to be proved is as follows:
+```coq
+{statement}
+```
+Supply only the complete proof body in the Coq proof language following the template:
+```coq
+Proof.
+    <proof body here>
+Qed.
+```
+\end{lstlisting}
+
+We also conducted preliminary experiments with other models available through Ollama,
+including \textbf{Gemma}, \textbf{Qwen3}, \textbf{DeepSeek R1 32B}, \textbf{Mistral 7B}, and \textbf{Mixtral 8x7B}.
+However, in early testing, these models did not produce valid or useful output at a high enough rate to justify running them across the full dataset.
+As a result, we focused our primary experiments on \textbf{LLaMA 3.1} and \textbf{Phi-4}.
+
+We evaluated model performance on 424 Coq proof obligations drawn from the \textit{Logical Foundations} textbook.
+For each proof, we tested the original file with human-readable identifiers and the renamed file where identifiers were mutated.
+
+\noindent\textit{Procedure:}
+Each model output was inserted into the proof location and compiled with Coq. If compilation succeeded, the attempt was marked as successful.
+
+\noindent\textit{Limitations:}
+In rare instances, the LLM ignored instructions about formatting the output and we were unable to extract a proof body.
+We believe this could fixed with more advanced extraction strategies or a different prompt.
+We also had to run on smaller models due to lack of sufficient GPU hardware.
