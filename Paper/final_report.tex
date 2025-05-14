@@ -1,0 +1,78 @@
+% This is samplepaper.tex, a sample chapter demonstrating the
+% LLNCS macro package for Springer Computer Science proceedings;
+% Version 2.20 of 2017/10/04
+%
+\documentclass[runningheads]{llncs}
+%
+\usepackage{graphicx}
+% Used for displaying a sample figure. If possible, figure files should
+% be included in EPS format.
+%\usepackage{tikz}
+%\usetikzlibrary{arrows}
+\usepackage{verbatim}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\let\proof\relax\let\endproof\relax
+\usepackage{amsthm}
+% \usepackage{graphicx}
+%\usepackage[all]{xy}
+\usepackage{array}
+\usepackage{enumitem}
+%\usepackage{cite}
+\usepackage[numbers,sectionbib]{natbib}
+\usepackage{wrapfig}
+\theoremstyle{definition}
+\renewcommand{\qedsymbol}{\hfill\ensuremath{\blacksquare}}
+%\newtheorem{definition}{Definition}[section]
+% If you use the hyperref package, please uncomment the following line
+% to display URLs in blue roman font according to Springer's eBook style:
+% \renewcommand\UrlFont{\color{blue}\rmfamily}
+\usepackage[breaklinks=true]{hyperref}
+\usepackage{breakcites}
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+
+\begin{document}
+%
+\title{Adaptive Theorem Proving Benchmarks for Robust LLM Evaluation}
+%
+%\titlerunning{Abbreviated paper title}
+% If the paper title is too long for the running head, you can set
+% an abbreviated paper title here
+%
+\author{Will Thomas \and Logan Schmalz \and Bryan Richlinski \and Jack Reynolds}
+
+\institute{Institute for Information Sciences \\ The
+  University of Kansas \\ Lawrence, KS 66045 \\
+  \email{\{30wthomas, loganschmalz, b748r023, jackreynolds\}@ku.edu}}
+%
+\maketitle              % typeset the header of the contribution
+%
+\include{abstract}
+%
+%
+%
+\include{introduction}
+\include{related-work}
+\include{dataset}
+\include{methodology}
+\include{experiment}
+\include{experiment}
+\include{conclusion}
+
+
+%
+% 
+% ---- Bibliography ----
+%
+% BibTeX users should specify bibliography style 'splncs04'.
+% References will then be sorted and formatted in the correct style.
+%
+%\bibliographystyle{splncs04}
+\bibliographystyle{splncsnat}
+%\bibliography{sldg}
+\bibliography{bib/sldg}
+%
+\end{document}
