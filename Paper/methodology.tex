@@ -7,11 +7,11 @@
 \label{sec:methodology}
 \subsection{Learning Algorithms}
 
-Our study explores the capabilities of large language models (LLMs) in interacting with formal proof code, specifically Coq files from the \textit{Logical Foundations} textbook. We used two open-source LLMs---\textbf{LLaMA 3.1} and \textbf{Phi-4}---run locally via \href{https://ollama.com}{Ollama} on an HPC cluster equipped with an Nvidia A100 GPU. No fine-tuning was applied; all models were used in their original zero-shot inference configuration.
+Our study explores the capabilities of large language models (LLMs) in interacting with formal proof code, specifically Coq files from the \textit{Logical Foundations} textbook. We used two open-source LLMs---\textbf{LLaMA 3.1} \cite{grattafiori2024llama3herdmodels} and \textbf{Phi-4} \cite{abdin2025phi4reasoningtechnicalreport}---run locally via \href{https://ollama.com}{Ollama} on an HPC cluster equipped with an Nvidia A100 GPU. No fine-tuning was applied; all models were used in their original zero-shot inference configuration.
 
 \subsection{Model Description and Setup}
 
-Both LLMs were queried in a \textbf{zero-shot} setting, where the model was given all code context from the start of the file up to a target proof obligation. The prompt consisted of the modified source code and a specific location where a proof (e.g., for a \texttt{Theorem}, \texttt{Lemma}, or \texttt{Fact}) was missing. The model’s task was to generate a proof term that would satisfy the Coq compiler.
+Both LLMs were queried in a \textbf{zero-shot} setting, where the model was given all code context from the start of the file up to a target proof obligation. The prompt consisted of the modified source code and a specific location where a proof (e.g., for a \texttt{Theorem}, \texttt{Lemma}, or \texttt{Fact}) was missing. The model's task was to generate a proof term that would satisfy the Coq compiler.
 
 We also conducted preliminary experiments with other models available through Ollama, including \textbf{Gemma}, \textbf{Qwen3}, \textbf{DeepSeek R1 32B}, \textbf{Mistral 7B}, and \textbf{Mixtral 8x7B}. However, in early testing, these models did not produce valid or useful output at a high enough rate to justify running them across the full dataset. As a result, we focused our primary experiments on LLaMA 3.1 and Phi-4.
 
