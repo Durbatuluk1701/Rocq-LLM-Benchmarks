@@ -36,3 +36,4 @@ samples/*.dbx
 *.fls
 *.synctex.gz
 final_report.pdf
+**/.vscode/
