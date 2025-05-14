@@ -178,18 +178,34 @@ def analyze_comp_mismatches_no_failures_model_specific(df):
     for model in MODEL_KEYS:
         print("-" * 20)
         print(f"\nModel: {model}")
-        orig_comp_not_mut_comp = df_no_failures[
+        orig_comp_mut_comp = df_no_failures[
             (df_no_failures["Model"] == model)
             & df_no_failures["Original Compiles"]
-            & ~df_no_failures["Mutated Compiles"]
+            & df_no_failures["Mutated Compiles"]
         ].shape[0]
         mut_comp_not_orig_comp = df_no_failures[
             (df_no_failures["Model"] == model)
             & ~df_no_failures["Original Compiles"]
             & df_no_failures["Mutated Compiles"]
         ].shape[0]
+        orig_comp_not_mut_comp = df_no_failures[
+            (df_no_failures["Model"] == model)
+            & df_no_failures["Original Compiles"]
+            & ~df_no_failures["Mutated Compiles"]
+        ].shape[0]
+        mut_not_comp_not_orig_comp = df_no_failures[
+            (df_no_failures["Model"] == model)
+            & ~df_no_failures["Original Compiles"]
+            & ~df_no_failures["Mutated Compiles"]
+        ].shape[0]
 
         print("Compilation Mismatches (in this no-failure subset):")
+        print(
+            f"  - Original Compiled AND Mutated Compiled: {orig_comp_mut_comp} ({orig_comp_mut_comp/total_entries_no_failures*100:.2f}%)"
+        )
+        print(
+            f"  - Original NOT Compile AND Mutated NOT Compiled: {mut_not_comp_not_orig_comp} ({mut_not_comp_not_orig_comp/total_entries_no_failures*100:.2f}%)"
+        )
         print(
             f"  - Original Compiled AND Mutated Did NOT Compile: {orig_comp_not_mut_comp} ({orig_comp_not_mut_comp/total_entries_no_failures*100:.2f}%)"
         )
