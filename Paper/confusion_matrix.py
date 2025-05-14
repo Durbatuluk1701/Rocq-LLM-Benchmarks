@@ -3,28 +3,19 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 
-def main():
+def confuse(csvfile):
     # Adjust the CSV file name as needed.
-    csv_file = "data.csv"
+    csv_file = csvfile
     df = pd.read_csv(csv_file)
-
-    # Option 1: If the CSV columns "Original Compiles" and "Mutated Compiles" 
-    # (as well as "Original Failed" and "Mutated Failed") are stored as booleans or numerics
-    # where a truthy value indicates compilation, then you can map the ground truth as follows:
-    #
-    # Ground Truth: 1 (Compiled) if the "Original Compiles" column is True, else 0 (Failed)
-    # Hypothesis: 1 (Compiled) if the "Mutated Compiles" column is True, else 0 (Failed)
-    
     def parse_bool(val):
-        # If your CSV values are strings like "True"/"False", uncomment the next line:
-        # return True if str(val).strip().lower() == "true" else False
         return bool(val)
+    
+    df["ground_truth"] = df.apply(lambda row: 1 if not parse_bool(row["Original Failed"]) else 0, axis=1)
+    df["prediction"]   = df.apply(lambda row: 1 if not parse_bool(row["Mutated Failed"]) else 0, axis=1)
 
-    # Create new columns 'ground_truth' and 'prediction' according to our mapping.
-    df["ground_truth"] = df.apply(lambda row: 1 if parse_bool(row["Original Compiles"]) else 0, axis=1)
-    df["prediction"]   = df.apply(lambda row: 1 if parse_bool(row["Mutated Compiles"]) else 0, axis=1)
-
-    # Alternatively, you could use the complementary Failed columns to validate your data. 
+    df["gt"] = df.apply(lambda row: 1 if not parse_bool(row["Original Compiles"]) else 0, axis=1)
+    df["p"]   = df.apply(lambda row: 1 if not parse_bool(row["Mutated Compiles"]) else 0, axis=1)
+    '''
 
     # Compute confusion matrix using scikit-learn
     # We define "1" as "Compiled" (i.e. positive outcome) and "0" as "Failed"
@@ -37,29 +28,37 @@ def main():
     #   - cm[1,0] = False Positives   (FP): original failed but mutated compiled
     #   - cm[1,1] = True Negatives    (TN): original failed and mutated failed
 
-    print("Confusion Matrix (Rows: Ground Truth, Columns: Predictions):")
-    print(cm)
-
-    # Alternatively, manually count the confusion matrix components:
-    TP = ((y_true == 1) & (y_pred == 1)).sum()
-    TN = ((y_true == 0) & (y_pred == 0)).sum()
-    FP = ((y_true == 0) & (y_pred == 1)).sum()  # False Positive: Mutated Compiles while Original Failed
-    FN = ((y_true == 1) & (y_pred == 0)).sum()  # False Negative: Mutated Fails while Original Compiled
-
-    print(f"True Positives: {TP}")
-    print(f"True Negatives: {TN}")
-    print(f"False Positives: {FP}")
-    print(f"False Negatives: {FN}")
-
     # Optional: Plot the confusion matrix using a heatmap for clearer visualization.
     plt.figure(figsize=(6,5))
     sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-                xticklabels=["Compiled", "Failed"],
-                yticklabels=["Compiled", "Failed"])
+                xticklabels=["LLM Output", "Failed"],
+                yticklabels=["LLM Output", "Failed"])
     plt.xlabel("Mutated Prediction")
-    plt.ylabel("Original (Ground Truth)")
+    plt.ylabel("Original")
     plt.title("Confusion Matrix")
-    plt.show()
+    plt.savefig("CM_LLMOutput.pdf")
+    plt.clf()
+    '''
+    filtered = df[(df["ground_truth"] == 1) & (df["prediction"] == 1)]
+    ids = list(set(df["Model"]))
 
-if __name__ == "__main__":
-    main()
+    for model in ids:
+
+        y_true = filtered[(filtered["Model"] == model)]
+        y_pred = filtered[(filtered["Model"] == model)]
+        y_true = y_true["gt"]
+        y_pred = y_pred["p"]
+        cm = confusion_matrix(y_true, y_pred, labels=[0,1])
+
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                    xticklabels=["Compiles", "Does Not Compile"],
+                    yticklabels=["Compiles", "Does Not Compile"])
+        plt.xlabel("Mutated")
+        plt.ylabel("Original")
+        plt.title(f"Coq Code Compiles Model: {model}")
+        plt.savefig(f"CM_Compiles_Model_{model}.pdf")
+        plt.clf()
+
+confuse("../results.csv")
+
+
