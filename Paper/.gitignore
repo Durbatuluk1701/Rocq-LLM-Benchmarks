@@ -35,3 +35,4 @@ samples/*.dbx
 *.fdb_latexmk
 *.fls
 *.synctex.gz
+final_report.pdf
