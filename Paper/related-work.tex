@@ -41,11 +41,21 @@ simply by executing the proof in the theorem prover.
 If code executes without an error it is guaranteed to be correct.
 In typical LLM code generation,
 there are a few criteria for judging the quality of LLM generated code.  
-Behavioral comparison can be accomplished by comparing the outputs of a ground truth program 
-to the outputs of the LLM code. 
-Text similarity between ground truth code and the LLM output can be used, 
-especially in cases were (insert stuff). 
-Code Judge cite3 is a novel technique that uses an LLM to judge output bla bla. 
+A common metric for program correctness is behavioral correctness,
+which can be accomplished by comparing the outputs of generated code
+and a known correct program on the problem specification such as through unit testing.
+This is most similar to our evaluation criteria of proof correctness.
+Text similarity between ground truth code and the LLM output can be used
+in cases where an LLM may produce code that is conceptually close
+to correct code but features syntax errors that may render an
+otherwise accurate solution unable to be compiled.
+CodeJudge (Tong and Zhang, 2024) is a novel technique
+used to evaluate LLM-generated code using another LLM.
+The judging LLM employs "slow thinking" to arrive at a
+thorough evaluation of the generated code,
+which unlike unit tests or code similarity can consider
+more nuanced notions of correctness and can have its
+criteria adjusted.
 While we chose to use code correctness as evaluation criteria 
 this was an experimental design decision, not a necessity.
 If the use case for LLM proof generation is to assist 
