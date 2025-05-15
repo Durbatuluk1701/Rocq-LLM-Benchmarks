@@ -2,3 +2,9 @@
 
 \section{Conclusion}
 \label{sec:conclusion}
+This report detailed the development and application of a dynamic benchmark suite designed to more authentically evaluate the theorem-proving capabilities of Large Language Models (LLMs) in the Coq proof assistant, specifically addressing the challenge of benchmark memorization. 
+By systematically renaming identifiers in theorems sourced from the \emph{Logical Foundations} dataset, we generated semantically equivalent but syntactically novel challenges for two contemporary LLMs, \texttt{llama3.1} and \texttt{phi4}. Further, our approach can be re-used to generate theoretically infinite sets of syntactically diverse theorems, which can be used to evaluate LLMs in a more robust manner.
+
+The core findings revealed that \textbf{models exhibit a discernible (but minor) decrease in their success rates when attempting to prove these mutated theorems compared to their original counterparts}. While \texttt{phi4} demonstrated higher overall performance and slightly greater robustness to these syntactic perturbations than \texttt{llama3.1}, the observed performance degradation across both models suggests a sensitivity to identifier names, implying a reliance that extends beyond pure logical structure to include learned surface-level patterns.
+
+Overall, the results indicate that LLMs are not yet fully capable of generalizing their reasoning abilities in the context of formal theorem proving, as evidenced by their performance on the original versus mutated theorems. The models struggled to produce compilable proofs even for original theorems, highlighting the challenges inherent in this domain. The low rate of pre-compilation failures for both models suggests that they were able to generate syntactically valid outputs more consistently when faced with renamed identifiers, even if those outputs were not logically correct.
