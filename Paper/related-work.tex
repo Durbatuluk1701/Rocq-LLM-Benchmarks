@@ -16,8 +16,7 @@ Proof Automation with Large Language Models\cite{proofautomationwithllms}
 
 
 
-\paragraph
-{Creating datasets}
+\paragraph{Creating datasets}
 To properly evaluate LLM performance on
 Coq code generation requires a corpus of well-structured
 proofs of theorems. For some language processing tasks
@@ -30,15 +29,15 @@ open-source projects exist.
 As theorem provers are relevant to a much smaller audience, the pool of quality examples in Coq is
 comparatively small.
 \citet{learningtoprove} compose a bespoke solution
-to this problem as CoqGym, a dataset and training
-environment for deep learning models.
+to this problem. They collected over 70,000 human-written proofs
+from over 100 different Coq projects to produce CoqGym,
+a dataset and training environment for deep learning models.
 
 
 %Learning to Prove Theorems via
 %Interacting with Proof Assistants
 
-\paragraph
-{Methodology in Coq against other languages}
+\paragraph{Methodology in Coq against other languages}
 In our target domain, Coq proofs, 
 we are interested in the formal correctness of our LLM output.
 For Proof scripts in a theorem prover,
