@@ -12,22 +12,18 @@ To properly evaluate LLM performance on
 Coq code generation requires a corpus of well-structured
 proofs of theorems. For some language processing tasks
 there are large bodies of existing works that can be leveraged for this purpose, 
-with proper consideration for authorized and ethical reuse.
-News media can serve as authoritative examples of
-well-formatted natural language, and for popular programming
-languages such as Python, C, and JavaScript many large
-open-source projects exist.
+with proper consideration for authorized reuse.
+For popular programming
+languages such as Python, C, and JavaScript this is easily achieved.
 As theorem provers are relevant to a much smaller audience, the pool of quality examples in Coq is
 comparatively small.
-\citet{learningtoprove} compose a bespoke solution
-to this problem. They collected over 70,000 human-written proofs
-from over 100 different Coq projects to produce CoqGym,
-a dataset and training environment for deep learning models.
+\citet{learningtoprove} compose CoqGym,
+a bespoke dataset and training environment for deep learning models
+composed of 70,000 human-written proofs from over 100 projects.
 This work addresses the issue of scale required for LLM training,
 but any LLMs produced
 after the publication of this work
-may have been partially or totally exposed to this set,
-procluding it from use to evaluate performance.
+may have been exposed to it and cannot be judged blindly.
 Our dataset intends to address this challenge
 through mutating variables included
 in existing datasets.
@@ -69,21 +65,11 @@ the latter being the solution we pursue.
 %Interacting with Proof Assistants
 
 \paragraph{Methodology in Coq against other languages}
-In our target domain, Coq proofs, 
-we are interested in the formal correctness of our LLM output.
-For Proof scripts in a theorem prover,
-the correctness of the generated code is proved true
-simply by running the proof in the theorem prover.
-If code type-checks without an error it is guaranteed to be correct.
-In typical LLM code generation,
-there are a few criteria for judging the quality of LLM generated code.  
-A common metric for program correctness is behavioral correctness,
-which can be accomplished by comparing the outputs of generated code
-and a known correct program on the problem specification such as through unit testing.
-Text similarity between ground truth code and the LLM output can be used
-in cases where an LLM may produce code that is conceptually close
-to correct code but features syntax errors that may render an
-otherwise accurate solution unable to be compiled.
+In our target domain, Coq proofs,
+code can be shown to be correct by simply type-checking in the theorem prover.
+LLM code generation for other languages
+has been judged by several other criteria for correctness,
+including behavioral correctness and code similarity.
 \citet{CodeJudge} present CodeJudge, a novel technique
 used to evaluate LLM-generated code using another LLM.
 The judging LLM employs "slow thinking" to arrive at a
