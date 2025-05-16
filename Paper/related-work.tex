@@ -18,27 +18,29 @@ Proof Automation with Large Language Models\cite{proofautomationwithllms}
 
 \paragraph
 {Creating datasets}
-Learning to Prove Theorems via
-Interacting with Proof Assistants
+To properly evaluate LLM performance on
+Coq code generation requires a corpus of well-structured
+proofs of theorems. For some language processing tasks,
+there are existing works that can leveraged 
+with proper consideration for authorized and ethical reuse
+to these problems.
+News media can serve as authoritative examples of
+well-formatted natural language, and for programming
+languages such as Python, C, and JavaScript many large
+open-source projects exist.
+The pool of available quality examples in Coq is
+comparatively small. 
 
+%Learning to Prove Theorems via
+%Interacting with Proof Assistants
 
 \paragraph
 {Methodology in Coq against other languages}
-
-Verifying the correctness of Coq proofs
-compared against LLM-generated code for other
-languages is a relatively closed problem
-given the well-defined proof goal and the
-strictness of the Coq theorem prover.
-CodeJudge (Tong and Zhang, 2024) explores
-alternative approaches of verification
-employed to 
-
 In our target domain, Coq proofs, 
 we are interested in the formal correctness of our LLM output.
 For Proof scripts in a theorem prover,
 the correctness of the generated code is proved true
-simply by executing the proof in the theorem prover.
+simply by running the proof in the theorem prover.
 If code type-checks without an error it is guaranteed to be correct.
 In typical LLM code generation,
 there are a few criteria for judging the quality of LLM generated code.  
@@ -49,7 +51,7 @@ Text similarity between ground truth code and the LLM output can be used
 in cases where an LLM may produce code that is conceptually close
 to correct code but features syntax errors that may render an
 otherwise accurate solution unable to be compiled.
-CodeJudge (Tong and Zhang, 2024) is a novel technique
+\citet{CodeJudge} present CodeJudge, a novel technique
 used to evaluate LLM-generated code using another LLM.
 The judging LLM employs "slow thinking" to arrive at a
 thorough evaluation of the generated code,
@@ -62,5 +64,3 @@ If the use case for LLM proof generation is to
 collaborate with a human programmer,
 more flexible evaluation criteria, as those above, may be more relevant. 
 
-CodeJudge: Evaluating Code Generation 
-with Large Language Models
