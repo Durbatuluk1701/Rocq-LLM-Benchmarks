@@ -17,8 +17,6 @@ For this study, the primary source of Coq theorems is the \emph{Logical Foundati
 
 The significance of \emph{Logical Foundations} as a data source includes:
 \begin{itemize}
-    \item \textbf{Pedagogical Value:} It serves as a popular introductory textbook for learning the Coq proof assistant and fundamental concepts in logic, functional programming, and programming language theory (e.g., operational semantics, type systems). Its theorems are often clearly stated and accompanied by detailed, didactic proofs.
-    \item \textbf{Structured Content:} The Coq files (\texttt{.v} files) associated with the book are well-structured and publicly available, making them amenable to automated processing.
     \item \textbf{Fundamental Concepts:} The theorems cover a range of foundational topics, providing a solid baseline for evaluating an LLM's reasoning capabilities on core logical constructs, inductive types, and recursive definitions commonly encountered in formal verification.
     \item \textbf{Community Relevance:} Due to its widespread adoption in academic courses and for self-study, it is plausible that LLMs may have encountered this material during their training. This makes it an interesting test case for our hypothesis that superficial transformations can effectively challenge memorization and test deeper understanding.
     \item \textbf{Manageable Scope:} The size and complexity of \emph{Logical Foundations} are substantial enough to provide a diverse set of theorems while remaining manageable for systematic extraction and experimentation within the scope of this project.
@@ -36,7 +34,7 @@ The extraction process, implemented in the \texttt{collect\_theorems} function o
     \item \textbf{Theorem Identification:} It iterates through the lines of the file, using regular expressions to detect the declaration of theorems, lemmas, or facts. The specific pattern employed for this initial detection is \texttt{\textbackslash s*(Theorem|Lemma|Fact)\textbackslash s+([A-Za-z][A-Za-z0-9\_']*)}. This pattern captures the declaration type (e.g., ``Theorem'') and its assigned name (e.g., ``plus\_comm'').
     \item \textbf{Statement Accumulation:} Upon identifying a theorem declaration, the script accumulates all subsequent lines belonging to the statement itself. This accumulation continues until a line matching the pattern \texttt{\textbackslash s*Proof\textbackslash .} is encountered, which typically signifies the beginning of the proof script and thus the end of the theorem statement. The collected lines are concatenated to form the complete theorem statement. A trailing period is appended if not already present, ensuring syntactic completeness for standalone presentation.
     \item \textbf{Context Preservation:} For each extracted theorem, the script also captures the entire content of the Coq file that precedes the theorem's declaration line. This ``context'' is crucial, as it includes all necessary \texttt{Require}, \texttt{Import}, \texttt{Inductive} type definitions, \texttt{Fixpoint} definitions, \texttt{Notation} declarations, and prior lemmas or definitions that the current theorem might depend upon. Without this context, a theorem statement would often be unprovable or even syntactically invalid.
-    \item \textbf{Structured Output:} The script compiles a list of dictionaries, where each dictionary represents an extracted theorem and contains the following key-value pairs:
+    \item \textbf{Structured Output:} The script compiles a dictionaries for each theorem containing the following key-value pairs:
     \begin{itemize}
         \item \texttt{"type"}: The type of the declaration (e.g., ``Theorem'', ``Lemma'', ``Fact'').
         \item \texttt{"name"}: The declared name of the theorem.
@@ -54,10 +52,10 @@ This regex-based approach was chosen for its simplicity and effectiveness in par
 The theorem extraction process was applied to all available Coq source files within the selected version of the \emph{Logical Foundations} dataset. This resulted in a comprehensive collection of formal statements suitable for our benchmarking task.
 
 The key statistics of the collected base dataset are as follows:
-\begin{itemize}
+\begin{multicols}{2}
+  \begin{itemize}
     \item \textbf{Total \texttt{.v} Files Processed:} 16
     \item \textbf{Total Statements Extracted:} 508
-    \item \textbf{Distribution by Type:}
     \begin{itemize}
         \item \texttt{Theorem}: 389
         \item \texttt{Lemma}: 115
@@ -75,7 +73,10 @@ The key statistics of the collected base dataset are as follows:
         \item Maximum lines: 2729
         \item Average lines: 887.41
     \end{itemize}
+    \end{itemize}
+\end{multicols}
+\begin{itemize}
     \item \textbf{Input/Output Definition:} For the purpose of this study, each extracted theorem forms a data point. The \textbf{input} for our subsequent LLM evaluation consists of the combined \texttt{"context"} and \texttt{"statement"}. The expected \textbf{output} from the LLM is a Coq proof script for the given statement.
-    \item \textbf{Dataset Size for Evaluation:} A subset of all the above theorems was utilized for our evaluation. This subset was 424 theorems that were amiable to LLM intervention. In particular, our proof repair mechanism was unable to reconcile proof's nested within a module, \textbf{as name shadowing caused major issues}. For this reason, only the 424 extracted statements constitute our evaluation benchmark. No distinct training, validation, or testing splits are created from this dataset by our methodology, as the objective is to evaluate pre-trained LLMs on these specifically constructed problems.
+    \item \textbf{Dataset Size for Evaluation:} A subset of $424$ theorems that were amiable to LLM proof attempts was utilized for our evaluation. In particular, our proof repair mechanism was unable to reconcile proof's nested within a module, \textbf{as name shadowing caused major issues}. No distinct training, validation, or testing splits are created from this dataset by our methodology, as the objective is to evaluate pre-trained LLMs on these specifically constructed problems.
 \end{itemize}
 This initial dataset, characterized by these statistics, provides a rich and varied set of formal reasoning problems. The subsequent transformation process builds upon this base to generate the dynamic benchmarks used for LLM evaluation.
