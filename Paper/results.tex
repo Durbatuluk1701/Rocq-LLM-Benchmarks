@@ -13,8 +13,12 @@ We also tracked instances where the LLM output was deemed unusable prior to comp
   \item \textbf{Theorem proving is a challenging task for LLMs.} The models struggled to produce compilable proofs, even for original theorems. See Section~\ref{sec:related-work} for a discussion of the state of the art in LLMs for theorem proving.
 \end{itemize}
 
+\begin{figure}
 \includegraphics[width=0.50\textwidth]{CM_Compiles_Model_llama3.1}
 \includegraphics[width=0.50\textwidth]{CM_Compiles_Model_phi4}
+\caption{Compilation success of LLM output compared between mutated and original benchmarks.}
+\label{fig:confusion_matrix}
+\end{figure}
 
 \subsection{Overall Performance Statistics}
 \label{sec:results_overall}
