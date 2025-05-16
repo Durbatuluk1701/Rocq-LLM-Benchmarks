@@ -6,15 +6,6 @@
 \section{Related Work}
 \label{sec:related-work}
 
-\paragraph{Evaluating LLM-generated code in Coq}
-
-The core question of this work aims to evaluate
-the ability of LLMs to produce correct Coq proofs
-despite input obfuscation.
-
-Proof Automation with Large Language Models\cite{proofautomationwithllms}
-
-
 
 \paragraph{Creating datasets}
 To properly evaluate LLM performance on
@@ -32,6 +23,46 @@ comparatively small.
 to this problem. They collected over 70,000 human-written proofs
 from over 100 different Coq projects to produce CoqGym,
 a dataset and training environment for deep learning models.
+This work addresses the issue of scale required for LLM training,
+but any LLMs produced
+after the publication of this work
+may have been partially or totally exposed to this set,
+procluding it from use to evaluate performance.
+Our dataset intends to address this challenge
+through mutating variables included
+in existing datasets.
+
+\paragraph{Evaluating LLM-generated code in Coq}
+
+\citep{proofautomationwithllms} introduces PALM,
+a novel approach for generating Coq proofs with LLMs.
+PALM can utilize an existing LLM, such as GPT-4 or Llama-3,
+as a baseline for proof synthesis and supplies repair tools
+to refine a model's answer.
+Contrasted with existing approaches that are able
+to solve 15\%-20\% of theorems presented to them,
+PALM achieves a proof success rate of 32\%-43\% 
+depending on the base model used.
+Without PALM, none of the base models can
+complete more than 7\% of the test set.
+PALM uses the previously mentioned CoqGym test set
+for performance evaluation, 
+a set that was published 5 years prior. 
+In their paper, \citeauthor{proofautomationwithllms} describe the steps 
+they took to avoid testing with data 
+that the underlying LLMs had already seen.  
+While the authors removed biased test data they were aware of, 
+they used publicly available models as a starting point, 
+meaning there is no guarantee that the baseline models 
+they used have not been tainted with undisclosed training data. 
+One of the base LLM models used in evaluation is Llama-3, 
+which has allegations of unethical data collection 
+levied against its creators \cite{PierceSF:LF2024}. 
+The probability of a model being tainted 
+with the training data in the CoqGym set increases with time, 
+meaning that either new datasets for Coq code will be required, 
+or a means of mutating existing datasets will be required; 
+the latter being the solution we pursue.
 
 
 %Learning to Prove Theorems via
