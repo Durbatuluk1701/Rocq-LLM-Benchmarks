@@ -8,13 +8,8 @@
 
 
 \paragraph{Creating datasets}
-To properly evaluate LLM performance on
-Coq code generation requires a corpus of well-structured
-proofs of theorems. For some language processing tasks
-there are large bodies of existing works that can be leveraged for this purpose, 
-with proper consideration for authorized reuse.
-For popular programming
-languages such as Python, C, and JavaScript this is easily achieved.
+Popular programming
+languages such as Python, have large sets of publicly available code making it relatively simple to construct training and testing datasets.
 As theorem provers are relevant to a much smaller audience, the pool of quality examples in Coq is
 comparatively small.
 \citet{learningtoprove} compose CoqGym,
@@ -42,17 +37,10 @@ PALM uses the previously mentioned CoqGym test set
 for performance evaluation, 
 a set that was published 5 years prior. 
 In their paper, \citeauthor{proofautomationwithllms} describe the steps 
-they took to avoid testing with data 
-that the underlying LLMs had already seen.  
-While the authors removed biased test data they were aware of, 
-they used publicly available models as a starting point, 
-meaning there is no guarantee that the baseline models 
-they used have not been tainted with undisclosed training data. 
-The probability of a model being tainted 
-with the training data in the CoqGym set increases with time, 
-meaning that either new datasets for Coq code will be required, 
-or a means of mutating existing datasets will be required; 
-the latter being the solution we pursue.
+they took to avoid testing with data that the underlying LLMs had already seen.
+This task becomes more challanging to do over time, though, as the probability that 
+a publicly available model is exposed to the CoqGym test set increases with time. 
+Giving rise to the need for new or mutated datasets. 
 
 
 %Learning to Prove Theorems via

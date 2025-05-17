@@ -37,15 +37,19 @@ Letting \( D = \{x_i\} \) be a dataset of proof goals and \( f_\theta(x_i) \) th
 \]
 
 \subsection{Strengths and Weaknesses}
-We consider this pipeline broadly successful: it allowed us to systematically remove semantic hints embedded in names while maintaining proof validity across the \textit{Logical Foundations} files.
+We consider this pipeline broadly successful: it allowed us to systematically remove semantic hints embedded in names while maintaining 
+proof validity across the \textit{Logical Foundations} files.
 
-A key strength of our approach is its generality: it can be applied to a wide range of Coq source files with minimal manual intervention. This made it feasible to process an entire textbook-scale dataset.
+A key strength of our approach is its generality: it can be applied to a wide range of Coq source files with minimal manual intervention. 
+This made it feasible to process an entire textbook-scale dataset.
 
 However, we encountered several limitations that required pragmatic compromises.
-First, Coq's support for nested modules led to name shadowing and scoping ambiguities during transformation.
-To address this, we excluded all code defined within Module blocks, which limited our dataset coverage.
-Second, as described previously, a small number of identifiers were excluded from renaming due to internal dependencies in the \textit{Logical Foundations} textbook. Some of these were recreated for pedagogical purposes or caused scoping issues and likely will not pose the same challenge in other real-world datasets.
+First, Coq's support for nested modules led to name shadowing and scoping ambiguities during transformation,
+precluding benchmarks with Module blocks from our dataset.
+Second, as described previously, a small number of identifiers were excluded from renaming due 
+to internal dependencies in the \textit{Logical Foundations} textbook. Some of these were 
+recreated for pedagogical purposes or caused scoping issues and likely will not pose the same challenge in other real-world datasets.
 
-Looking forward, we believe that more principled approaches to identifier transformation are possible. One promising direction is leveraging Coq's extraction mechanism to perform semantically sound renaming while avoiding scoping issues.
+Looking forward, we believe that leveraging Coq's extraction mechanism to perform semantically sound renaming will prevent scoping issues.
 We also see value in extending our transformation strategy beyond naming.
 Specifically, we explored (but were unable to finish) applying logical equivalences, which could help evaluate whether LLMs can recognize and generalize over structurally identical but syntactically different proof goals.
